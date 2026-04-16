@@ -1,0 +1,111 @@
+<div class="container-fluid py-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4 header-container">
+        <h1 class="h3 mb-0 text-gray-800 font-weight-bold">📦 Quản lý Sản Phẩm</h1>
+        <div class="actions">
+            <button mat-raised-button class="btn-export mr-2" (click)="exporter.exportTable('csv', {fileName:'DS_San_Pham'})">
+                <i class="fa fa-download mr-1"></i> Xuất Excel
+            </button>
+            <app-add-product (saveFinish)="finish()"></app-add-product>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <mat-form-field appearance="outline" class="w-100 custom-search">
+                        <mat-label>Tìm tên, mã, loại hàng...</mat-label>
+                        <input matInput (keyup)="search($event)">
+                        <mat-icon matSuffix>search</mat-icon>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table mat-table matTableExporter #exporter="matTableExporter" [hiddenColumns]="[0,9,10]" [dataSource]="listData" matSort class="w-100">
+                    
+                    <ng-container matColumnDef="image">
+                        <th mat-header-cell *matHeaderCellDef> Ảnh </th>
+                        <td mat-cell *matCellDef="let row">
+                            <img [src]="row.image" class="product-img">
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="productId">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
+                        <td mat-cell *matCellDef="let row"> <b>#{{row.productId}}</b> </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="name">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Tên sản phẩm </th>
+                        <td mat-cell *matCellDef="let row" class="product-name"> {{row.name}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="price">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Giá bán </th>
+                        <td mat-cell *matCellDef="let row"> {{row.price | number}}đ </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="category">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Loại hàng </th>
+                        <td mat-cell *matCellDef="let row"> 
+                            <span class="badge-category">{{row.category.categoryName}}</span>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="status">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Hiển thị </th>
+                        <td mat-cell *matCellDef="let row">
+                            <span [ngClass]="row.status ? 'status-active' : 'status-hidden'">
+                                {{row.status ? 'Đang bán' : 'Tạm ẩn'}}
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="enteredDate">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Ngày nhập </th>
+                        <td mat-cell *matCellDef="let row"> {{row.enteredDate | date:'dd/MM/yyyy'}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="expiryDate">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Hết hạn </th>
+                        <td mat-cell *matCellDef="let row"> {{row.expiryDate | date:'dd/MM/yyyy'}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="inventoryStatus">
+                        <th mat-header-cell *matHeaderCellDef> Tình trạng </th>
+                        <td mat-cell *matCellDef="let row">
+                            <span [ngSwitch]="getExpiryStatus(row.expiryDate)">
+                                <span *ngSwitchCase="'expired'" class="badge-alert expired">Hết hạn</span>
+                                <span *ngSwitchCase="'warning'" class="badge-alert warning">Sắp hết hạn</span>
+                                <span *ngSwitchCase="'good'" class="badge-alert good">Tươi mới</span>
+                                <span *ngSwitchDefault class="badge-alert none">-</span>
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="view">
+                        <th mat-header-cell *matHeaderCellDef> Sửa </th>
+                        <td mat-cell *matCellDef="let row">
+                            <app-edit-product [id]="row.productId" (editFinish)="finish()"></app-edit-product>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="delete">
+                        <th mat-header-cell *matHeaderCellDef> Xoá </th>
+                        <td mat-cell *matCellDef="let row">
+                            <button mat-icon-button color="warn" (click)="delete(row.productId, row.name)">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columns;" class="table-row"></tr>
+                </table>
+            </div>
+
+            <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+        </div>
+    </div>
+</div>

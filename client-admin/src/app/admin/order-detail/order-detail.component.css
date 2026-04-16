@@ -1,0 +1,63 @@
+/* Aliceblue background cho yêu cầu hoàn trả */
+.bg-aliceblue { background-color: #f0f8ff; }
+
+/* Timeline UI */
+.order-status-timeline {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    position: relative;
+}
+
+.order-status-timeline::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    right: 5%;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+
+.status-step {
+    z-index: 2;
+    background: white;
+    text-align: center;
+    width: 20%;
+}
+
+.status-step i {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: white;
+    line-height: 40px;
+    margin-bottom: 5px;
+    transition: all 0.3s;
+}
+
+.status-step.active i { background: #28a745; transform: scale(1.2); box-shadow: 0 0 10px rgba(40,167,69,0.5); }
+.status-step.cancel i { background: #dc3545; }
+.status-step.return i { background: #17a2b8; }
+
+.status-label { font-size: 12px; font-weight: bold; display: block; }
+
+/* Card Info */
+.info-box {
+    border-radius: 10px;
+    padding: 15px;
+    height: 100%;
+    transition: 0.3s;
+    border: 1px solid #eee;
+}
+
+.info-box:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.info-box h6 { color: #555; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
+
+/* Table styling */
+.mat-column-image { width: 60px; }
+.mat-column-index { width: 50px; }
+.product-img { border-radius: 5px; object-fit: cover; border: 1px solid #ddd; }

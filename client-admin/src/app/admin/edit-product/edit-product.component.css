@@ -1,0 +1,55 @@
+/* Header Modal */
+.bg-edit {
+    background-color: #4e73df;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+/* Label & Input */
+.font-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #5a5c69;
+    margin-bottom: 4px;
+}
+
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #d1d3e2;
+}
+
+/* Viền trái màu sắc cho các ô quan trọng */
+.border-left-warning { border-left: 4px solid #f6c23e !important; }
+.border-left-success { border-left: 4px solid #1cc88a !important; }
+
+/* Preview ảnh */
+.edit-img-preview {
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Nút bấm */
+.btn-rounded { border-radius: 50px; font-weight: 600; }
+.btn-edit-submit { background-color: #4e73df; color: white; }
+.btn-edit-submit:hover { background-color: #2e59d9; color: #fff; }
+
+/* Icon Edit ở bảng */
+.action-edit-icon {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.action-edit-icon:hover {
+    background-color: #f0f4ff;
+    transform: scale(1.2);
+}
+
+/* Validation */
+.is-invalid { border-color: #e74c3c !important; }

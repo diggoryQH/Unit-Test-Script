@@ -1,0 +1,38 @@
+<div class="modal-header">
+    <h4 class="modal-title">Chỉnh sửa thông tin khách hàng</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modalService.dismissAll()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">Tên</label>
+        <input id="name" formControlName="name" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" formControlName="email" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="phone">Số điện thoại</label>
+        <input id="phone" formControlName="phone" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="address">Địa chỉ</label>
+        <input id="address" formControlName="address" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="gender">Giới tính</label>
+        <select id="gender" formControlName="gender" class="form-control">
+          <option [value]="true">Nam</option>
+          <option [value]="false">Nữ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input id="password" type="password" formControlName="password" class="form-control" />
+      </div>
+      <button type="submit" class="btn btn-primary">Lưu</button>
+    </form>
+  </div>

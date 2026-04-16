@@ -1,0 +1,179 @@
+<main class="ps-page--my-account">
+  <div class="ps-breadcrumb">
+    <div class="container">
+      <ul class="breadcrumb">
+        <li><a [routerLink]="['/home']">Trang chủ</a></li>
+        <li><a [routerLink]="['/profile']">Tài khoản</a></li>
+        <li>Tài khoản cá nhân</li>
+      </ul>
+    </div>
+  </div>
+  <section class="ps-section--account">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-3">
+          <div class="ps-section__left">
+            <aside class="ps-widget--account-dashboard">
+              <div class="ps-widget__header">
+                <img [src]="customer.image" alt="User Avatar" />
+                <figure>
+                  <p>
+                    Tên: <span style="color: #09c">{{ customer.name }}</span>
+                  </p>
+                  <p>
+                    Tham gia:
+                    <span>{{
+                      customer.registerDate | date : "dd-MM-yyyy"
+                    }}</span>
+                  </p>
+                </figure>
+              </div>
+              <div class="ps-widget__content">
+                <ul>
+                  <li>
+                    <a href="javascript:void(0);"
+                      ><i class="icon-user"></i> {{ customer.email }}</a
+                    >
+                    <a href="javascript:void(0);"
+                      ><i class="icon-papers"></i> {{ customer.phone }}</a
+                    >
+                    <a href="javascript:void(0);"
+                      ><i class="icon-user"></i>
+                      {{ customer.gender ? "Nam" : "Nữ" }}</a
+                    >
+                    <a href="javascript:void(0);"
+                      ><i class="icon-map-marker"></i> {{ customer.address }}</a
+                    >
+                    <a href="javascript:void(0);"
+                      ><i class="icon-store"></i>Đã giao dịch: {{ done }} đơn</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="javascript:void(0);"
+                      (click)="openEditCustomerModal()"
+                      ><i class="icon-pencil"></i> Sửa thông tin</a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="ps-section__right">
+            <div class="ps-section--account-setting">
+              <div class="ps-section__header">
+                <h3>Lịch sử đặt hàng</h3>
+              </div>
+              <div class="ps-section__content">
+                <div class="table-responsive">
+                  <table class="table ps-table ps-table--invoices">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Địa chỉ</th>
+                        <th>Số điện thoại</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        *ngFor="
+                          let item of orders
+                            | paginate : { itemsPerPage: 5, currentPage: page };
+                          index as i
+                        "
+                      >
+                        <td>{{ i + 1 }}</td>
+                        <td style="width: 15%">
+                          {{ item.orderDate | date : "dd-MM-yyyy" }}
+                        </td>
+                        <td>{{ item.amount | currency : "VND" }}</td>
+                        <td>{{ item.address }}</td>
+                        <td>{{ item.phone }}</td>
+                        <td style="width: 17%">
+                          <span [ngSwitch]="item.status">
+                            <span *ngSwitchCase="0" class="text-warning"
+                              ><b>Chờ xác nhận</b></span
+                            >
+                            <span *ngSwitchCase="1" class="text-primary"
+                              ><b>Đang giao hàng</b></span
+                            >
+                            <span *ngSwitchCase="2" class="text-success"
+                              ><b>Hoàn tất</b></span
+                            >
+                            <span *ngSwitchCase="3" class="text-danger"
+                              ><b>Đã huỷ</b></span
+                            >
+                            <span *ngSwitchCase="4" class="text-info"
+                              ><b>Chờ duyệt Trả/Hủy</b></span
+                            >
+                            <span *ngSwitchCase="6" class="text-secondary"
+                              ><b>Đã hoàn trả</b></span
+                            >
+                          </span>
+                        </td>
+                        <td style="width: 8%">
+                          <div class="d-flex align-items-center">
+                            <app-order-detail
+                              [id]="item.ordersId"
+                            ></app-order-detail>
+
+                            <a
+                              *ngIf="
+                                item.status == 0 ||
+                                item.status == 1 ||
+                                item.status == 2
+                              "
+                              title="Yêu cầu Hủy/Trả hàng"
+                              (click)="cancel(item)"
+                              style="
+                                cursor: pointer;
+                                color: #dc3545;
+                                font-size: 20px;
+                                margin-left: 12px;
+                              "
+                            >
+                              <i class="icon-sync"></i>
+                            </a>
+
+                            <i
+                              *ngIf="
+                                item.status == 3 ||
+                                item.status == 4 ||
+                                item.status == 6
+                              "
+                              class="icon-lock"
+                              style="
+                                color: #ccc;
+                                font-size: 18px;
+                                margin-left: 12px;
+                              "
+                              title="Đã đóng yêu cầu"
+                            ></i>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="ps-pagination text-center mt-4">
+                    <pagination-controls
+                      (pageChange)="page = $event"
+                      previousLabel=""
+                      nextLabel=""
+                    ></pagination-controls>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

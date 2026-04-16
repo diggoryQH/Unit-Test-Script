@@ -1,0 +1,91 @@
+<div class="ps-page--simple">
+    <div class="ps-breadcrumb">
+        <div class="container">
+            <ul class="breadcrumb">
+                <li><a [routerLink]="['/home']">Trang chủ</a></li>
+                <li>Thanh Toán</li>
+            </ul>
+        </div>
+    </div>
+    <div class="ps-checkout ps-section--shopping">
+        <div class="container">
+            <div class="ps-section__header">
+                <h1>Thanh Toán</h1>
+            </div>
+            <div class="ps-section__content">
+                <form class="ps-form--checkout" [formGroup]="postForm">
+                    <div class="row">
+                        <div class="col-xl-7 col-lg-8 col-md-12 col-sm-12">
+                            <div class="ps-form__billing-info">
+                                <h3 class="ps-form__heading">Thông tin nhận hàng</h3>
+                                <div class="form-group">
+                                    <label>Họ và tên</label>
+                                    <input class="form-control" type="text" [value]="cart?.user?.name" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Số điện thoại<sup>*</sup></label>
+                                    <input class="form-control" type="text" formControlName="phone" [ngClass]="{'is-invalid':postForm.get('phone')?.touched && postForm.get('phone')?.invalid}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tỉnh/Thành phố<sup>*</sup></label>
+                                    <select class="form-control" (change)="setProvinceCode($event.target)" formControlName="province">
+                                        <option value="0" disabled>Chọn tỉnh thành</option>
+                                        <option *ngFor="let item of provinces" [value]="item.code">{{item.name}}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Quận/Huyện<sup>*</sup></label>
+                                    <select class="form-control" (change)="setDistrictCode($event.target)" formControlName="district">
+                                        <option value="0" disabled>Chọn quận huyện</option>
+                                        <option *ngFor="let item of districts" [value]="item.code">{{item.name}}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phường/Xã<sup>*</sup></label>
+                                    <select class="form-control" (change)="setWardCode($event.target)" formControlName="ward">
+                                        <option value="0" disabled>Chọn phường xã</option>
+                                        <option *ngFor="let item of wards" [value]="item.code">{{item.name}}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Địa chỉ cụ thể<sup>*</sup></label>
+                                    <input class="form-control" type="text" formControlName="number" placeholder="Số nhà, tên đường...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-5 col-lg-4 col-md-12 col-sm-12">
+                            <div class="ps-form__total">
+                                <h3 class="ps-form__heading">Đơn hàng</h3>
+                                <div class="content">
+                                    <div class="ps-block--checkout-total">
+                                        <div class="ps-block__content">
+                                            <table class="table ps-block__products">
+                                                <tbody>
+                                                    <tr *ngFor="let item of cartDetails">
+                                                        <td>
+                                                            <a>{{item.product.name}} × {{item.quantity}}</a>
+                                                            <p><small>KL: {{item.product.weight}} (kg)</small></p>
+                                                        </td>
+                                                        <td class="text-right">{{item.price | currency:'VND'}}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <hr>
+                                            <p>Tạm tính: <span>{{amount | currency:'VND'}}</span></p>
+                                            <p>Phí vận chuyển: <span class="text-primary">+ {{shippingFee | currency:'VND'}}</span></p>
+                                            <p>Tiết kiệm: <span>- {{discount | currency:'VND'}}</span></p>
+                                            <h3 class="mt-3">Tổng cộng: <span class="text-danger">{{totalPay | currency:'VND'}}</span></h3>
+                                        </div>
+                                    </div>
+                                    <button class="ps-btn ps-btn--fullwidth mt-3" (click)="checkOut()">Thanh toán COD</button>
+                                    <button class="ps-btn ps-btn--fullwidth mt-2" style="background:#0A68FF;" (click)="payWithVnpay()">Thanh toán VNPAY</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

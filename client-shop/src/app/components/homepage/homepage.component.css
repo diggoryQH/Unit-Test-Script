@@ -1,0 +1,30 @@
+.star {
+    position: relative;
+    display: inline-block;
+    font-size: 5rem;
+    color: #d3d3d3;
+  }
+  .full {
+    color: #ffcc23;
+  }
+  .half {
+    position: absolute;
+    display: inline-block;
+    overflow: hidden;
+    color: #ffcc23;
+  }
+
+#carouselExampleIndicators {
+  height: 800px;
+}
+
+#carouselExampleIndicators .carousel-item {
+  height: 800px;
+}
+
+#carouselExampleIndicators .carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* hoặc cover + center */
+}
+

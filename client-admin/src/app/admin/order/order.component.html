@@ -1,0 +1,78 @@
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Danh sách đơn hàng</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <mat-form-field appearance="outline" style="width: 300px;">
+                <mat-label>Tìm kiếm nhanh...</mat-label>
+                <input matInput type="text" (keyup)="search($event)" placeholder="Tên, SĐT hoặc Mã HĐ" />
+            </mat-form-field>
+            
+            <button mat-raised-button color="primary" style="float: right; margin-top: 10px;" 
+                (click)="exporter.exportTable('csv', {fileName:'Danh sách đơn hàng'})">
+                <i class="fas fa-file-excel"></i> Xuất Excel
+            </button>
+
+            <table mat-table matTableExporter #exporter="matTableExporter" [hiddenColumns]="[7]" [dataSource]="listData" matSort class="mat-elevation-z8 w-100">
+                
+                <ng-container matColumnDef="id">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Mã HĐ</th>
+                    <td mat-cell *matCellDef="let row"><b>#{{row.ordersId}}</b></td>
+                </ng-container>
+
+                <ng-container matColumnDef="user">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Khách hàng</th>
+                    <td mat-cell *matCellDef="let row">{{row.user.name}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="address">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header style="width: 25%;">Địa chỉ</th>
+                    <td mat-cell *matCellDef="let row">{{row.address}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="phone">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>SĐT</th>
+                    <td mat-cell *matCellDef="let row">{{row.phone}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="amount">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Tổng tiền</th>
+                    <td mat-cell *matCellDef="let row" style="color: red; font-weight: bold;">{{row.amount|currency:'VND'}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="orderDate">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Ngày đặt</th>
+                    <td mat-cell *matCellDef="let row">{{row.orderDate|date:'dd-MM-yyyy HH:mm'}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Trạng thái</th>
+                    <td mat-cell *matCellDef="let row">
+                        <span [ngSwitch]="row.status">
+                            <span *ngSwitchCase="0" class="badge badge-warning text-dark">Chờ xác nhận</span>
+                            <span *ngSwitchCase="1" class="badge badge-primary">Đang giao</span>
+                            <span *ngSwitchCase="2" class="badge badge-success">Đã giao</span>
+                            <span *ngSwitchCase="3" class="badge badge-danger">Đã hủy</span>
+                            <span *ngSwitchCase="4" class="badge badge-info animate-pulse">Cần duyệt Trả/Hủy</span>
+                            <span *ngSwitchCase="6" class="badge badge-secondary">Đã hoàn tiền</span>
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="view">
+                    <th mat-header-cell *matHeaderCellDef style="text-align: center;">Thao tác</th>
+                    <td mat-cell *matCellDef="let row" style="text-align: center;">
+                        <app-order-detail [orderId]="row.ordersId" (updateFinish)="finish()"></app-order-detail>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+            </table>
+
+            <mat-paginator [length]="orderLength" showFirstLastButtons [pageSize]="12" [pageSizeOptions]="[10, 20, 50]"></mat-paginator>
+        </div>
+    </div>
+</div>

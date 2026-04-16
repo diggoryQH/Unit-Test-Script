@@ -1,0 +1,67 @@
+/* Layout & Table */
+.header-container { margin-bottom: 25px; }
+.card { border-radius: 12px; }
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.mat-header-cell {
+    color: #4e73df;
+    font-weight: bold;
+    font-size: 13px;
+    padding: 16px !important;
+    background: #f8f9fc;
+}
+.table-row:hover { background-color: #f1f4f9 !important; }
+
+/* Image */
+.product-img {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin: 5px 0;
+}
+
+/* Badge - Trạng thái bán (Status) */
+.status-active {
+    color: #1cc88a;
+    background: #e6fff5;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.status-hidden {
+    color: #e74c3c;
+    background: #fff0f0;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Badge - Cảnh báo hết hạn (Inventory Status) */
+.badge-alert {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.expired { background: #e74c3c; color: white; }
+.warning { background: #f6c23e; color: #fff; }
+.good { background: #1cc88a; color: white; }
+.none { background: #eaecf4; color: #858796; }
+
+/* Các thành phần khác */
+.badge-category {
+    background: #4e73df15;
+    color: #4e73df;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+.product-name { font-weight: 500; color: #2e59d9; }
+.btn-export { background-color: #27ae60 !important; color: white !important; }
+
+/* Search field styling */
+::ng-deep .custom-search .mat-form-field-wrapper { padding-bottom: 0; }

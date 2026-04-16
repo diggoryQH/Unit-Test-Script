@@ -1,0 +1,68 @@
+/* Tùy chỉnh Modal */
+.modal-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.font-weight-600 {
+    font-weight: 600;
+    color: #4a4a4a;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+/* Nút thêm mới ngoài trang danh sách */
+.btn-add-new {
+    background-color: #4e73df !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0 20px !important;
+    height: 40px;
+    font-weight: 600 !important;
+    float: right;
+}
+
+/* Form controls */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #d1d3e2;
+    padding: 10px;
+    font-size: 0.9rem;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.1);
+    border-color: #4e73df;
+}
+
+/* Preview Ảnh */
+.image-preview-container {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.preview-img {
+    max-height: 100%;
+    transition: transform 0.3s;
+}
+
+.preview-img:hover {
+    transform: scale(1.05);
+}
+
+/* Bo tròn nút bấm */
+.btn-rounded {
+    border-radius: 50px;
+}
+
+/* Custom file input */
+.custom-file-label::after {
+    content: "Duyệt";
+    background-color: #f8f9fc;
+}

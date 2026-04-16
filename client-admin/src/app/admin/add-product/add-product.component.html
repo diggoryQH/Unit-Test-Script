@@ -1,0 +1,112 @@
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header bg-primary text-white">
+        <h4 class="modal-title m-0 font-weight-bold">🥗 Thêm Nông Sản Mới</h4>
+        <button type="button" class="close text-white" (click)="d('Cross click')">&times;</button>
+    </div>
+    
+    <div class="modal-body p-4 bg-light">
+        <form [formGroup]="postForm">
+            <div class="row">
+                <div class="form-group col-md-8">
+                    <label class="font-weight-600">Tên sản phẩm <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fa fa-tag"></i></span>
+                        </div>
+                        <input type="text" class="form-control" formControlName="name" 
+                            placeholder="Nhập tên rau, củ, quả..."
+                            [ngClass]="{'is-invalid': postForm.get('name')?.touched && postForm.get('name')?.invalid}">
+                    </div>
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label class="font-weight-600">Loại hàng</label>
+                    <select class="custom-select form-control" formControlName="categoryId">
+                        <option *ngFor="let item of categories" [value]="item.categoryId">{{item.categoryName}}</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label class="font-weight-600">Giá vốn (VND)</label>
+                    <input type="number" class="form-control border-warning" formControlName="costPrice" placeholder="0">
+                </div>
+                <div class="form-group col-md-4">
+                    <label class="font-weight-600">Giá bán (VND)</label>
+                    <input type="number" class="form-control border-success" formControlName="price" placeholder="0">
+                </div>
+                <div class="form-group col-md-4">
+                    <label class="font-weight-600">Khuyến mãi (%)</label>
+                    <input type="number" class="form-control" formControlName="discount">
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label class="font-weight-600">Số lượng kho</label>
+                    <input type="number" class="form-control" formControlName="quantity">
+                </div>
+                <div class="form-group col-md-4">
+                    <label class="font-weight-600">Khối lượng (Net)</label>
+                    <input type="number" class="form-control" formControlName="weight">
+                </div>
+                <div class="form-group col-md-4">
+                    <label class="font-weight-600">Đơn vị tính</label>
+                    <select class="custom-select form-control" formControlName="unit">
+                        <option value="kg">Kg</option>
+                        <option value="bó">Bó</option>
+                        <option value="túi">Túi</option>
+                        <option value="combo">Combo</option>
+                        <option value="trái">Trái/Quả</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label class="font-weight-600 text-primary">📅 Ngày nhập kho</label>
+                    <input type="date" class="form-control" formControlName="enteredDate">
+                </div>
+                <div class="form-group col-md-6">
+                    <label class="font-weight-600 text-danger">⚠️ Ngày hết hạn dự kiến</label>
+                    <input type="date" class="form-control" formControlName="expiryDate"
+                        [ngClass]="{'is-invalid': postForm.hasError('dateInvalid')}">
+                    <small class="text-danger" *ngIf="postForm.hasError('dateInvalid')">
+                        Ngày hết hạn không được trước ngày nhập!
+                    </small>
+                </div>
+
+                <div class="form-group col-md-12">
+                    <label class="font-weight-600">Nguồn gốc / Chứng chỉ chất lượng</label>
+                    <input type="text" class="form-control" formControlName="origin" placeholder="Vd: VietGAP - Trang trại Đà Lạt">
+                </div>
+
+                <div class="col-md-7">
+                    <div class="form-group">
+                        <label class="font-weight-600">Mô tả chi tiết</label>
+                        <textarea class="form-control" rows="6" formControlName="description" 
+                            placeholder="Đặc điểm sản phẩm, cách bảo quản..."></textarea>
+                    </div>
+                </div>
+
+                <div class="col-md-5 text-center">
+                    <label class="font-weight-600">Hình ảnh sản phẩm</label>
+                    <div class="image-preview-container mb-2">
+                        <img [src]="image" class="img-fluid rounded shadow-sm preview-img">
+                    </div>
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="customFile" (change)="onFileSelect($event)">
+                        <label class="custom-file-label" for="customFile">Thay đổi ảnh</label>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal-footer bg-white">
+        <button type="button" class="btn btn-light btn-rounded px-4" (click)="d('Close')">Đóng</button>
+        <button type="submit" class="btn btn-primary btn-rounded px-4 shadow" 
+            [disabled]="postForm.invalid" (click)="save()">
+            <i class="fa fa-save mr-1"></i> Lưu sản phẩm
+        </button>
+    </div>
+</ng-template>
+
+<button mat-raised-button class="btn-add-new" (click)="open(content)">
+    <mat-icon>add_circle</mat-icon> Thêm sản phẩm
+</button>

@@ -1,0 +1,163 @@
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header bg-dark text-white">
+        <h4 class="modal-title"><i class="fas fa-file-invoice mr-2"></i> CHI TIẾT ĐƠN HÀNG #{{order.ordersId}}</h4>
+        <button type="button" class="close text-white" (click)="d('Cross click')">&times;</button>
+    </div>
+
+    <div class="modal-body" style="background-color: #fbfbfb;">
+        
+        <div class="order-status-timeline">
+            <div class="status-step" [class.active]="order.status >= 0">
+                <i class="fas fa-clipboard-list"></i>
+                <span class="status-label">Chờ xác nhận</span>
+            </div>
+            <div class="status-step" [class.active]="order.status >= 1 && order.status != 3">
+                <i class="fas fa-shipping-fast"></i>
+                <span class="status-label">Đang giao</span>
+            </div>
+            <div class="status-step" [class.active]="order.status == 2">
+                <i class="fas fa-check-double"></i>
+                <span class="status-label">Hoàn tất</span>
+            </div>
+            <div class="status-step cancel" *ngIf="order.status == 3">
+                <i class="fas fa-times-circle"></i>
+                <span class="status-label">Đã hủy</span>
+            </div>
+            <div class="status-step return" *ngIf="order.status == 4 || order.status == 6">
+                <i class="fas fa-undo-alt"></i>
+                <span class="status-label">{{order.status == 4 ? 'Yêu cầu trả' : 'Đã hoàn tiền'}}</span>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="info-box bg-white">
+                    <h6><i class="fas fa-user text-primary mr-2"></i> Khách hàng</h6>
+                    <p class="mb-1"><b>Tên:</b> {{order.user.name}}</p>
+                    <p class="mb-1"><b>SĐT:</b> {{order.phone}}</p>
+                    <p class="mb-1 text-muted"><b>Email:</b> {{order.user.email}}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-box bg-white">
+                    <h6><i class="fas fa-map-marker-alt text-danger mr-2"></i> Địa chỉ nhận</h6>
+                    <p class="small">{{order.address}}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-box bg-white">
+                    <h6><i class="fas fa-credit-card text-success mr-2"></i> Thanh toán</h6>
+                    <p class="mb-1">Ngày đặt: {{order.orderDate | date:'dd/MM/yyyy HH:mm'}}</p>
+                    <h5 class="text-danger mt-2 font-weight-bold">{{order.amount | currency:'VND'}}</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive shadow-sm">
+            <table mat-table [dataSource]="listData" class="w-100">
+                <ng-container matColumnDef="index">
+                    <th mat-header-cell *matHeaderCellDef class="bg-light">STT</th>
+                    <td mat-cell *matCellDef="let row; let i = index">{{i+1}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="image">
+                    <th mat-header-cell *matHeaderCellDef class="bg-light">Ảnh</th>
+                    <td mat-cell *matCellDef="let row">
+                        <img [src]="row.product.image" width="45" height="45" class="product-img my-2">
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="product">
+                    <th mat-header-cell *matHeaderCellDef class="bg-light">Sản phẩm</th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="font-weight-bold text-dark">{{row.product.name}}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="quantity">
+                    <th mat-header-cell *matHeaderCellDef class="bg-light text-center">SL</th>
+                    <td mat-cell *matCellDef="let row" class="text-center">x{{row.quantity}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="price">
+                    <th mat-header-cell *matHeaderCellDef class="bg-light text-right">Giá</th>
+                    <td mat-cell *matCellDef="let row" class="text-right text-primary font-weight-bold">
+                        {{row.price | currency:'VND'}}
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+            </table>
+        </div>
+
+        <div *ngIf="order.status == 4 && returnInfo" class="mt-4 p-3 border rounded border-info bg-aliceblue shadow-sm animate__animated animate__fadeInUp">
+            <h5 class="text-info d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i> YÊU CẦU HOÀN TRẢ TỪ KHÁCH HÀNG
+            </h5>
+            <hr>
+            <div class="row">
+                <div class="col-md-7">
+                    <p><b><i class="fas fa-question-circle mr-1"></i> Lý do:</b> <span class="badge badge-info">{{returnInfo.reason}}</span></p>
+                    <p><b><i class="fas fa-align-left mr-1"></i> Mô tả chi tiết:</b><br>
+                        <span class="text-muted italic">{{returnInfo.description}}</span>
+                    </p>
+                </div>
+                <div class="col-md-5" *ngIf="returnInfo.evidenceImage">
+                    <p><b><i class="fas fa-image mr-1"></i> Ảnh bằng chứng:</b></p>
+                    <a [href]="returnInfo.evidenceImage" target="_blank">
+                        <img [src]="returnInfo.evidenceImage" class="img-thumbnail" style="max-height: 150px; cursor: zoom-in;" alt="Evidence">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer bg-light">
+        <div class="w-100 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge p-2" [ngClass]="{
+                    'badge-warning': order.status == 0,
+                    'badge-primary': order.status == 1,
+                    'badge-success': order.status == 2,
+                    'badge-danger': order.status == 3,
+                    'badge-info': order.status == 4,
+                    'badge-secondary': order.status == 6
+                }">
+                    Trạng thái hiện tại: {{
+                        order.status == 0 ? 'Chờ xác nhận' : 
+                        order.status == 1 ? 'Đang giao' : 
+                        order.status == 2 ? 'Đã thanh toán' : 
+                        order.status == 3 ? 'Đã hủy' : 
+                        order.status == 4 ? 'Chờ duyệt trả hàng' : 'Đã hoàn tiền'
+                    }}
+                </span>
+            </div>
+            <div>
+                <button mat-raised-button color="primary" *ngIf="order.status==0" (click)="deliver()" class="mr-2">
+                    <i class="fas fa-check mr-1"></i> Xác nhận đơn
+                </button>
+                <button mat-raised-button color="warn" *ngIf="order.status==0" (click)="cancel()" class="mr-2">
+                    <i class="fas fa-ban mr-1"></i> Huỷ đơn
+                </button>
+
+                <button mat-raised-button color="accent" *ngIf="order.status==1" (click)="confirm()" class="mr-2">
+                    <i class="fas fa-hand-holding-usd mr-1"></i> Đã nhận tiền
+                </button>
+
+                <ng-container *ngIf="order.status==4">
+                    <button mat-raised-button style="background-color: #28a745; color: white;" (click)="approveReturn()" class="mr-2">
+                        <i class="fas fa-check-circle mr-1"></i> Đồng ý hoàn tiền
+                    </button>
+                    <button mat-raised-button color="warn" (click)="rejectReturn()">
+                        <i class="fas fa-times-circle mr-1"></i> Từ chối
+                    </button>
+                </ng-container>
+
+                <button mat-button (click)="c('Close')" class="ml-2">Đóng</button>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<a class="fas fa-eye" style="cursor: pointer; color: #4e73df; font-size: 20px;" (click)="open(content)" title="Xem chi tiết đơn hàng"></a>
