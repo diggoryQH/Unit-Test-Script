@@ -100,7 +100,11 @@
 				<artifactId>commons-codec</artifactId>
 				<version>1.16.0</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 	</dependencies>
 
@@ -141,6 +145,7 @@
 						<exclude>com/nongsan/dto/**</exclude>
 						<exclude>com/nongsan/config/**</exclude>
 						<exclude>com/nongsan/NongSanApplication.class</exclude>
+						<exclude>com/nongsan/utils/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
