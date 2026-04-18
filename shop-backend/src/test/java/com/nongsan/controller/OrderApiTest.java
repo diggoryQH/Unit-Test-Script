@@ -9,7 +9,9 @@ import com.nongsan.service.implement.UserDetailsServiceImpl;
 import com.nongsan.utils.SendMailUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -227,6 +229,28 @@ class OrderApiTest {
     }
 
     /**
+     * TC_ORDER_08b | updateStatus | Phát hiện BUG: status=2 (Thành công) KHÔNG trừ kho
+     * ⚠️ BUG LOGIC: Khi gọi API updateStatus với status=2, hệ thống chỉ đổi trạng thái 
+     * và gửi mail chứ không hề gọi hàm updateProduct() để trừ kho như endpoint /success.
+     * Test này sẽ PASS (xác nhận lỗi có thật) khi verify(productRepository.save) là never().
+     */
+    @Test
+    void updateStatus_testChuan2b_status2_loiKhongTruKho() throws Exception {
+        Long orderId = 2L;
+        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 1, null);
+
+        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 2))
+                .andExpect(status().isOk());
+
+        // BUG: productRepository KHÔNG BAO GIỜ được gọi để update số lượng
+        Mockito.verify(productRepository, Mockito.never()).save(any(Product.class));
+    }
+
+    /**
      * TC_ORDER_09 | updateStatus | Nhánh: status=3 → gửi mail "hủy đơn"
      */
     @Test
@@ -264,6 +288,29 @@ class OrderApiTest {
         Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
         Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
         Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
+    }
+
+    /**
+     * TC_ORDER_16 | updateStatus | Nhánh: status=6 → gửi mail hủy (trả hàng đã duyệt)
+     * ⚠️ Nhánh bị bỏ sót: source code có "if (status == 3 || status == 6)" nhưng chỉ có TC_ORDER_09 test status=3.
+     * status=6 xảy ra khi admin chấp nhận yêu cầu trả hàng có hoàn tiền.
+     */
+    @Test
+    void updateStatus_testChuan5_status6_traHangHoanTien() throws Exception {
+        Long orderId = 5L;
+        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 4, null);
+
+        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 6))
+                .andExpect(status().isOk());
+
+        // status=6 phải gửi mail hủy (cùng nhánh với status=3)
+        Mockito.verify(sendMailUtil).sendMailOrderCancel(mockOrder);
+        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
+        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
     }
 
     // =========================================
@@ -378,5 +425,48 @@ class OrderApiTest {
         Mockito.verify(orderRepository).save(mockOrder);
         Mockito.verify(productRepository).save(mockProduct);
         Mockito.verify(sendMailUtil).sendMailOrderSuccess(mockOrder);
+    }
+
+    /**
+     * TC_ORDER_15b | success | Kiểm tra giá trị quantity và sold sau khi trừ kho
+     * Mục đích: Phát hiện lỗi logic trong updateProduct() — dùng ArgumentCaptor để
+     *           xác minh chính xác giá trị quantity và sold đã được tính đúng.
+     *
+     * Kịch bản: Product ban đầu quantity=10, sold=5. OrderDetail có quantity=2.
+     * Kỳ vọng: quantity = 10 - 2 = 8, sold = 5 + 2 = 7.
+     * Nếu logic bị sai (vd: trừ sai trường, không trừ), test này sẽ FAIL.
+     */
+    @Test
+    void success_testChuan2_kiemTraGiaTriTruKho() throws Exception {
+        Long orderId = 2L;
+
+        Product mockProduct = new Product();
+        mockProduct.setProductId(10L);
+        mockProduct.setQuantity(10); // Tồn kho ban đầu
+        mockProduct.setSold(5);      // Đã bán ban đầu
+
+        // Đơn hàng gồm 2 sản phẩm productId=10
+        OrderDetail mockDetail = new OrderDetail(1L, 2, 40000.0, mockProduct, null);
+
+        Order mockOrder = new Order(orderId, new Date(), 40000.0, "HCM", "0987", 20000.0, 1.0, 1, null);
+
+        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+        Mockito.when(orderDetailRepository.findByOrder(mockOrder)).thenReturn(Arrays.asList(mockDetail));
+        Mockito.when(productRepository.findById(10L)).thenReturn(Optional.of(mockProduct));
+        Mockito.when(productRepository.save(any(Product.class))).thenReturn(mockProduct);
+
+        mockMvc.perform(get("/api/orders/success/{orderId}", orderId))
+                .andExpect(status().isOk());
+
+        // Bắt đối tượng Product được truyền vào save() để kiểm tra giá trị thực tế
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        Mockito.verify(productRepository).save(productCaptor.capture());
+
+        Product savedProduct = productCaptor.getValue();
+        assertEquals(8, savedProduct.getQuantity(),
+                "[BUG DETECT] quantity phải giảm đúng: 10 - 2 = 8, nhưng thực tế là " + savedProduct.getQuantity());
+        assertEquals(7, savedProduct.getSold(),
+                "[BUG DETECT] sold phải tăng đúng: 5 + 2 = 7, nhưng thực tế là " + savedProduct.getSold());
     }
 }
