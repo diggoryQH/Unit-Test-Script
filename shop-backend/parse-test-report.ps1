@@ -1,4 +1,4 @@
- Script to parse XML test report and create detailed text report
+# Script to parse XML test report and create detailed text report
 
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.UserApiTest.xml"
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.StatisticalApiTest.xml"
