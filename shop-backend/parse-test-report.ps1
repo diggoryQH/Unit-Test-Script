@@ -1,4 +1,5 @@
 # Script to parse XML test report and create detailed text report
+<<<<<<< HEAD
 
 # === REQ-03: Quản lý giỏ hàng ===
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.CartApiTest.xml"
@@ -13,6 +14,8 @@
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.OrderApiTest.xml"
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.OrderDetailApiTest.xml"
 $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.OrderReturnApiTest.xml"
+=======
+>>>>>>> bd2b4f1bfb67d9346ee8303811ab18ad70cd3208
 
 
 
