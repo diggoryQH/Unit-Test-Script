@@ -1,10 +1,19 @@
- Script to parse XML test report and create detailed text report
+# Script to parse XML test report and create detailed text report
 
-# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.UserApiTest.xml"
-# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.StatisticalApiTest.xml"
-# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.ResetPasswordControllerTest.xml"
-#$xmlPath = "target/surefire-reports/TEST-com.nongsan.service.SendMailServiceTest.xml"
-$xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.CartDetailApiTest.xml"
+# === REQ-03: Quản lý giỏ hàng ===
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.CartApiTest.xml"
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.CartDetailApiTest.xml"
+
+# === REQ-04: Đặt hàng & Thanh toán ===
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.CheckoutApiTest.xml"
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.VnPayControllerTest.xml"
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.service.VNPayServiceTest.xml"
+
+# === REQ-12: Xử lý đơn hàng ===
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.OrderApiTest.xml"
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.OrderDetailApiTest.xml"
+$xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.OrderReturnApiTest.xml"
+
 
 
 
