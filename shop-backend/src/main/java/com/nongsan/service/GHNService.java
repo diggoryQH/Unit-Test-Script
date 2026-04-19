@@ -19,8 +19,12 @@ public class GHNService {
     private final String SHOP_ID = "5275649";
     private final String FEE_URL = "https://online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee";
 
+    protected RestTemplate createRestTemplate() {
+        return new RestTemplate();
+    }
+
     public Double calculateFee(String toWardCode, Integer toDistrictId, Integer weight) {
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = createRestTemplate();
         
         // Thiết lập Header
         HttpHeaders headers = new HttpHeaders();
