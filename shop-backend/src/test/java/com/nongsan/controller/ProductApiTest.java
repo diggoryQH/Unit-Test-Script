@@ -60,7 +60,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_01
+     * Test Case ID: TC_PRO_01
      * Mô tả: Lấy danh sách sản phẩm thành công khi ID danh mục tồn tại.
      */
     @Test
