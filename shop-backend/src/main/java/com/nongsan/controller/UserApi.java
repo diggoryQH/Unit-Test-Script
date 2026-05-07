@@ -208,7 +208,7 @@ public class UserApi {
 		return ResponseEntity.ok().build();
 	}
 
-	@PostMapping("send-mail-forgot-password-token")
+	@PostMapping("/send-mail-forgot-password-token")
 	public ResponseEntity<String> sendToken(@RequestBody String email) {
 
 		if (!userRepository.existsByEmail(email)) {

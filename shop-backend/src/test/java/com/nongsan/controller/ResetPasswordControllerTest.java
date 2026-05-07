@@ -48,8 +48,16 @@ class ResetPasswordControllerTest {
     @MockBean
     private AuthTokenFilter authTokenFilter;
 
+    // ==========================================
+    // MODULE: HIỂN THỊ FORM RESET PASSWORD
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_RP_01
+     * Mô tả: Hiển thị form reset password thành công khi token hợp lệ.
+     */
     @Test
-    void resetPassword_testChuan1() throws Exception {
+    void resetPassword_testChuan1() throws Exception { 
 	String token = "valid-token-123";
 	User user = new User();
 	user.setUserId(1L);
@@ -71,6 +79,10 @@ class ResetPasswordControllerTest {
 	Mockito.verify(userRepository).findByToken(token);
     }
 
+    /**
+     * Test Case ID: TC_RP_02
+     * Mô tả: Hiển thị form reset password thất bại khi token không hợp lệ hoặc hết hạn.
+     */
     @Test
     void resetPassword_testNgoaiLe1() throws Exception {
 	String token = "invalid-token-xyz";
@@ -84,6 +96,14 @@ class ResetPasswordControllerTest {
 	Mockito.verify(userRepository).findByToken(token);
     }
 
+    // ==========================================
+    // MODULE: XỬ LÝ RESET PASSWORD
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_RP_03
+     * Mô tả: Reset password thành công khi token hợp lệ và password đủ điều kiện.
+     */
     @Test
     void reset_testChuan1() throws Exception {
 	String token = "valid-token-123";
@@ -118,6 +138,10 @@ class ResetPasswordControllerTest {
 	Mockito.verify(userRepository).save(any(User.class));
     }
 
+    /**
+     * Test Case ID: TC_RP_04
+     * Mô tả: Reset password thất bại khi password quá ngắn (dưới 6 ký tự).
+     */
     @Test
     void reset_testNgoaiLe1() throws Exception {
 	String token = "valid-token-123";
@@ -147,6 +171,10 @@ class ResetPasswordControllerTest {
 	Mockito.verify(userRepository, never()).save(any(User.class));
     }
 
+    /**
+     * Test Case ID: TC_RP_05
+     * Mô tả: Reset password thất bại khi password và confirm password không khớp nhau.
+     */
     @Test
     void reset_testNgoaiLe2() throws Exception {
 	String token = "valid-token-123";
@@ -174,6 +202,14 @@ class ResetPasswordControllerTest {
 	Mockito.verify(userRepository, never()).save(any(User.class));
     }
 
+    // ==========================================
+    // MODULE: TRANG THÀNH CÔNG VÀ LỖI
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_RP_06
+     * Mô tả: Hiển thị trang reset password thành công.
+     */
     @Test
     void done_testChuan1() throws Exception {
 	mockMvc.perform(get("/forgot-password/done"))
@@ -181,6 +217,10 @@ class ResetPasswordControllerTest {
 		.andExpect(view().name("/done"));
     }
 
+    /**
+     * Test Case ID: TC_RP_07
+     * Mô tả: Hiển thị trang lỗi khi token không hợp lệ.
+     */
     @Test
     void error_testChuan1() throws Exception {
 	mockMvc.perform(get("/forgot-password/error"))

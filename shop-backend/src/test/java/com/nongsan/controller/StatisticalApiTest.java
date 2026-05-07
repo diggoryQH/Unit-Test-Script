@@ -62,6 +62,14 @@ class StatisticalApiTest {
     @MockBean
     private AuthTokenFilter authTokenFilter;
 
+    // ==========================================
+    // MODULE: BÁO CÁO NÂNG CAO THEO NĂM
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_S_01
+     * Mô tả: Lấy báo cáo nâng cao thành công với dữ liệu tài chính đầy đủ trong năm.
+     */
     @Test
     void getAdvancedReport_testChuan1() throws Exception {
 	int year = 2026;
@@ -90,6 +98,39 @@ class StatisticalApiTest {
 	Mockito.verify(orderRepository).countByStatus(6);
     }
 
+    /**
+     * Test Case ID: TC_S_02
+     * Mô tả: Lấy báo cáo nâng cao thành công khi không có dữ liệu tài chính (trả về 0).
+     */
+    @Test
+    void getAdvancedReport_testChuan2() throws Exception {
+	int year = 2024;
+	
+	// Mock financial data with null values
+	Object[] financialData = {null, null, null};
+	Mockito.when(statisticalRepository.getFinancialData(year))
+		.thenReturn(new ArrayList<>());
+	
+	Mockito.when(orderRepository.countByStatus(2)).thenReturn(100L);
+	Mockito.when(orderRepository.countByStatus(3)).thenReturn(5L);
+	Mockito.when(orderRepository.countByStatus(6)).thenReturn(2L);
+
+	mockMvc.perform(get("/api/statistical/advanced-report/{year}", year))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.totalRevenue").value(0.0))
+		.andExpect(jsonPath("$.grossProfit").value(0.0));
+
+	Mockito.verify(statisticalRepository).getFinancialData(year);
+    }
+
+    // ==========================================
+    // MODULE: DOANH THU THEO NĂM
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_S_03
+     * Mô tả: Lấy tổng doanh thu theo năm thành công.
+     */
     @Test
     void getRevenueByYear_testChuan1() throws Exception {
 	int year = 2025;
@@ -104,6 +145,10 @@ class StatisticalApiTest {
 	Mockito.verify(statisticalRepository).getRevenueByYear(year);
     }
 
+    /**
+     * Test Case ID: TC_S_04
+     * Mô tả: Lấy doanh thu theo năm không có dữ liệu (trả về 0).
+     */
     @Test
     void getRevenueByYear_testNgoaiLe1() throws Exception {
 	int year = 2020;
@@ -117,6 +162,14 @@ class StatisticalApiTest {
 	Mockito.verify(statisticalRepository).getRevenueByYear(year);
     }
 
+    // ==========================================
+    // MODULE: LẤY DANH SÁCH NĂM
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_S_05
+     * Mô tả: Lấy danh sách các năm có đơn hàng thành công.
+     */
     @Test
     void getYears_testChuan1() throws Exception {
 	List<Integer> years = Arrays.asList(2024, 2025, 2026);
@@ -133,6 +186,14 @@ class StatisticalApiTest {
 	Mockito.verify(statisticalRepository).getYears();
     }
 
+    // ==========================================
+    // MODULE: LẤY ĐƠN HÀNG THÀNH CÔNG
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_S_06
+     * Mô tả: Lấy danh sách tất cả đơn hàng thành công (status = 2) - Trường hợp có đơn.
+     */
     @Test
     void getAllOrderSuccess_testChuan1() throws Exception {
 	Order order1 = new Order();
@@ -158,6 +219,10 @@ class StatisticalApiTest {
 	Mockito.verify(orderRepository).findByStatus(2);
     }
 
+    /**
+     * Test Case ID: TC_S_07
+     * Mô tả: Lấy danh sách đơn hàng thành công khi không có đơn nào (trả về mảng rỗng).
+     */
     @Test
     void getAllOrderSuccess_testNgoaiLe1() throws Exception {
 	Mockito.when(orderRepository.findByStatus(2)).thenReturn(new ArrayList<>());
@@ -169,6 +234,14 @@ class StatisticalApiTest {
 	Mockito.verify(orderRepository).findByStatus(2);
     }
 
+    // ==========================================
+    // MODULE: THỐNG KÊ DANH MỤC BÁN CHẠY
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_S_08
+     * Mô tả: Lấy danh sách danh mục bán chạy thành công - Trường hợp có 1 danh mục.
+     */
     @Test
     void getCategoryBestSeller_testChuan1() throws Exception {
 	// Mock data: [category_name, quantity, revenue]
@@ -187,6 +260,39 @@ class StatisticalApiTest {
 	Mockito.verify(statisticalRepository).getCategoryBestSeller();
     }
 
+    /**
+     * Test Case ID: TC_S_09
+     * Mô tả: Lấy danh sách danh mục bán chạy - Trường hợp có nhiều danh mục.
+     */
+    @Test
+    void getCategoryBestSeller_testChuan2() throws Exception {
+	// Mock multiple categories
+	Object[] category1 = {"Trái cây", 150, 3000000};
+	Object[] category2 = {"Rau xanh", 200, 2500000};
+	Object[] category3 = {"Cá cạn", 80, 2000000};
+	
+	List<Object[]> categoryList = Arrays.asList(category1, category2, category3);
+
+	Mockito.when(statisticalRepository.getCategoryBestSeller()).thenReturn(categoryList);
+
+	mockMvc.perform(get("/api/statistical/get-category-seller"))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.size()").value(3))
+		.andExpect(jsonPath("$[0].name").value("Trái cây"))
+		.andExpect(jsonPath("$[1].name").value("Rau xanh"))
+		.andExpect(jsonPath("$[2].name").value("Cá cạn"));
+
+	Mockito.verify(statisticalRepository).getCategoryBestSeller();
+    }
+
+    // ==========================================
+    // MODULE: THỐNG KÊ TỒN KHO
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_S_10
+     * Mô tả: Lấy danh sách sản phẩm trong kho thành công - Trường hợp có 2 sản phẩm.
+     */
     @Test
     void getInventory_testChuan1() throws Exception {
 	Product product1 = new Product();
@@ -216,95 +322,10 @@ class StatisticalApiTest {
 	Mockito.verify(productRepository).findByStatusTrueOrderByQuantityDesc();
     }
 
-    @Test
-    void getStatisticalYear_testChuan1() throws Exception {
-	int year = 2026;
-	
-	// Mock monthly financial data: [month, revenue, cost]
-	List<Object[]> monthlyData = new ArrayList<>();
-	monthlyData.add(new Object[]{1, 1000000.0, 400000.0});
-	monthlyData.add(new Object[]{2, 1200000.0, 500000.0});
-	monthlyData.add(new Object[]{3, 1100000.0, 450000.0});
-	
-	Mockito.when(statisticalRepository.getMonthlyFinancials(year)).thenReturn(monthlyData);
-
-	mockMvc.perform(get("/api/statistical/{year}", year))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.size()").value(12)) // Should have all 12 months
-		.andExpect(jsonPath("$[0].month").value(1))
-		.andExpect(jsonPath("$[0].amount").value(1000000.0))
-		.andExpect(jsonPath("$[0].profit").value(600000.0)) // revenue - cost
-		.andExpect(jsonPath("$[1].month").value(2))
-		.andExpect(jsonPath("$[1].amount").value(1200000.0))
-		.andExpect(jsonPath("$[1].profit").value(700000.0));
-
-	Mockito.verify(statisticalRepository).getMonthlyFinancials(year);
-    }
-
-    @Test
-    void getStatisticalYear_testChuan2() throws Exception {
-	int year = 2025;
-	
-	// Mock with fewer months
-	List<Object[]> monthlyData = new ArrayList<>();
-	monthlyData.add(new Object[]{1, 500000.0, 200000.0});
-	monthlyData.add(new Object[]{12, 800000.0, 350000.0});
-	
-	Mockito.when(statisticalRepository.getMonthlyFinancials(year)).thenReturn(monthlyData);
-
-	mockMvc.perform(get("/api/statistical/{year}", year))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.size()").value(12)) // Still has all 12 months (including empty ones)
-		.andExpect(jsonPath("$[0].month").value(1))
-		.andExpect(jsonPath("$[0].amount").value(500000.0))
-		.andExpect(jsonPath("$[11].month").value(12))
-		.andExpect(jsonPath("$[11].amount").value(800000.0));
-
-	Mockito.verify(statisticalRepository).getMonthlyFinancials(year);
-    }
-
-    @Test
-    void getAdvancedReport_testChuan2() throws Exception {
-	int year = 2024;
-	
-	// Mock financial data with null values
-	Object[] financialData = {null, null, null};
-	Mockito.when(statisticalRepository.getFinancialData(year))
-		.thenReturn(new ArrayList<>());
-	
-	Mockito.when(orderRepository.countByStatus(2)).thenReturn(100L);
-	Mockito.when(orderRepository.countByStatus(3)).thenReturn(5L);
-	Mockito.when(orderRepository.countByStatus(6)).thenReturn(2L);
-
-	mockMvc.perform(get("/api/statistical/advanced-report/{year}", year))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.totalRevenue").value(0.0))
-		.andExpect(jsonPath("$.grossProfit").value(0.0));
-
-	Mockito.verify(statisticalRepository).getFinancialData(year);
-    }
-
-    @Test
-    void getCategoryBestSeller_testChuan2() throws Exception {
-	// Mock multiple categories
-	Object[] category1 = {"Trái cây", 150, 3000000};
-	Object[] category2 = {"Rau xanh", 200, 2500000};
-	Object[] category3 = {"Cá cạn", 80, 2000000};
-	
-	List<Object[]> categoryList = Arrays.asList(category1, category2, category3);
-
-	Mockito.when(statisticalRepository.getCategoryBestSeller()).thenReturn(categoryList);
-
-	mockMvc.perform(get("/api/statistical/get-category-seller"))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.size()").value(3))
-		.andExpect(jsonPath("$[0].name").value("Trái cây"))
-		.andExpect(jsonPath("$[1].name").value("Rau xanh"))
-		.andExpect(jsonPath("$[2].name").value("Cá cạn"));
-
-	Mockito.verify(statisticalRepository).getCategoryBestSeller();
-    }
-
+    /**
+     * Test Case ID: TC_S_11
+     * Mô tả: Lấy danh sách sản phẩm trong kho - Trường hợp có 3 sản phẩm.
+     */
     @Test
     void getInventory_testChuan2() throws Exception {
 	Product product1 = new Product();
@@ -337,5 +358,64 @@ class StatisticalApiTest {
 		.andExpect(jsonPath("$[2].quantity").value(100));
 
 	Mockito.verify(productRepository).findByStatusTrueOrderByQuantityDesc();
+    }
+
+    // ==========================================
+    // MODULE: THỐNG KÊ THEO THÁNG TRONG NĂM
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_S_12
+     * Mô tả: Lấy thống kê theo năm với dữ liệu nhiều tháng liên tiếp.
+     */
+    @Test
+    void getStatisticalYear_testChuan1() throws Exception {
+	int year = 2026;
+	
+	// Mock monthly financial data: [month, revenue, cost]
+	List<Object[]> monthlyData = new ArrayList<>();
+	monthlyData.add(new Object[]{1, 1000000.0, 400000.0});
+	monthlyData.add(new Object[]{2, 1200000.0, 500000.0});
+	monthlyData.add(new Object[]{3, 1100000.0, 450000.0});
+	
+	Mockito.when(statisticalRepository.getMonthlyFinancials(year)).thenReturn(monthlyData);
+
+	mockMvc.perform(get("/api/statistical/{year}", year))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.size()").value(12)) // Should have all 12 months
+		.andExpect(jsonPath("$[0].month").value(1))
+		.andExpect(jsonPath("$[0].amount").value(1000000.0))
+		.andExpect(jsonPath("$[0].profit").value(600000.0)) // revenue - cost
+		.andExpect(jsonPath("$[1].month").value(2))
+		.andExpect(jsonPath("$[1].amount").value(1200000.0))
+		.andExpect(jsonPath("$[1].profit").value(700000.0));
+
+	Mockito.verify(statisticalRepository).getMonthlyFinancials(year);
+    }
+
+    /**
+     * Test Case ID: TC_S_13
+     * Mô tả: Lấy thống kê theo năm với dữ liệu không liên tiếp (tháng 1 và tháng 12).
+     */
+    @Test
+    void getStatisticalYear_testChuan2() throws Exception {
+	int year = 2025;
+	
+	// Mock with fewer months
+	List<Object[]> monthlyData = new ArrayList<>();
+	monthlyData.add(new Object[]{1, 500000.0, 200000.0});
+	monthlyData.add(new Object[]{12, 800000.0, 350000.0});
+	
+	Mockito.when(statisticalRepository.getMonthlyFinancials(year)).thenReturn(monthlyData);
+
+	mockMvc.perform(get("/api/statistical/{year}", year))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.size()").value(12)) // Still has all 12 months (including empty ones)
+		.andExpect(jsonPath("$[0].month").value(1))
+		.andExpect(jsonPath("$[0].amount").value(500000.0))
+		.andExpect(jsonPath("$[11].month").value(12))
+		.andExpect(jsonPath("$[11].amount").value(800000.0));
+
+	Mockito.verify(statisticalRepository).getMonthlyFinancials(year);
     }
 }
