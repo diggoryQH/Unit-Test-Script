@@ -51,7 +51,6 @@ class CartDetailApiTest {
     @MockBean
     private ProductRepository productRepository;
 
-    // Giả lập Security (bắt buộc để WebMvcTest không lỗi)
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
 
@@ -65,15 +64,24 @@ class CartDetailApiTest {
     private ObjectMapper jsonMapper;
 
     // ==========================================
-    // MODULE: LẤY DANH SÁCH SẢN PHẨM TRONG GIỎ THEO CART ID (GET)
+    // MODULE: LẤY DANH SÁCH ITEM THEO CART ID — GET /api/cartDetail/cart/{id}
     // ==========================================
 
     /**
-     * Test Case ID: TC_CARTDETAIL_01
-     * Mô tả: Lấy danh sách sản phẩm trong giỏ thành công khi cartId tồn tại.
+     * TC_CARTDETAIL_01
+     * Mục tiêu  : Lấy danh sách sản phẩm trong giỏ thành công khi cartId tồn tại và có items.
+     * Đầu vào   : cartId = 1 (tồn tại, có 2 items)
+     * Hành vi GS: cartRepository.existsById  → true
+     *             cartRepository.findById     → Optional(mockCart)
+     *             cartDetailRepository.findByCart → [item1(qty=2), item2(qty=1)]
+     * Kết quả KV: HTTP 200 OK
+     *             body.size()      = 2
+     *             body[0].quantity = 2
+     *             body[1].quantity = 1
+     * Verify    : cartDetailRepository.findByCart được gọi đúng 1 lần
      */
-    @Test
-    void getByCartId_testChuan1() throws Exception {
+    @Test // [Happy Path] Lấy danh sách item thành công — cartId tồn tại và có items
+    void TC_CARTDETAIL_01() throws Exception {
         Long validCartId = 1L;
 
         Cart mockCart = new Cart();
@@ -104,11 +112,15 @@ class CartDetailApiTest {
     }
 
     /**
-     * Test Case ID: TC_CARTDETAIL_02
-     * Mô tả: Trả về 404 Not Found khi cartId không tồn tại trong hệ thống.
+     * TC_CARTDETAIL_02
+     * Mục tiêu  : Trả về 404 khi cartId không tồn tại trong DB.
+     * Đầu vào   : cartId = 999 (không có trong DB)
+     * Hành vi GS: cartRepository.existsById → false
+     * Kết quả KV: HTTP 404 Not Found
+     * Verify    : cartDetailRepository.findByCart KHÔNG được gọi (early return)
      */
-    @Test
-    void getByCartId_testNgoaiLe1() throws Exception {
+    @Test // [Branch Coverage] Nhánh: cartId không tồn tại → 404, không gọi findByCart
+    void TC_CARTDETAIL_02() throws Exception {
         Long invalidCartId = 999L;
 
         Mockito.when(cartRepository.existsById(invalidCartId)).thenReturn(false);
@@ -120,16 +132,51 @@ class CartDetailApiTest {
         Mockito.verify(cartDetailRepository, Mockito.never()).findByCart(any());
     }
 
+    /**
+     * TC_CARTDETAIL_03
+     * Mục tiêu  : Giỏ hàng tồn tại nhưng chưa có sản phẩm nào → trả về mảng rỗng (không phải 404).
+     * Đầu vào   : cartId = 2 (tồn tại, chưa có item nào)
+     * Hành vi GS: cartRepository.existsById    → true
+     *             cartDetailRepository.findByCart → [] (danh sách rỗng)
+     * Kết quả KV: HTTP 200 OK
+     *             body.size() = 0
+     * Verify    : cartDetailRepository.findByCart được gọi đúng 1 lần
+     */
+    @Test // [Edge Case] Giỏ tồn tại nhưng rỗng → 200 OK với mảng rỗng
+    void TC_CARTDETAIL_03() throws Exception {
+        Long cartId = 2L;
+
+        Cart mockCart = new Cart();
+        mockCart.setCartId(cartId);
+
+        Mockito.when(cartRepository.existsById(cartId)).thenReturn(true);
+        Mockito.when(cartRepository.findById(cartId)).thenReturn(Optional.of(mockCart));
+        Mockito.when(cartDetailRepository.findByCart(mockCart)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/cartDetail/cart/{id}", cartId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(0));
+
+        Mockito.verify(cartDetailRepository).findByCart(mockCart);
+    }
+
     // ==========================================
-    // MODULE: LẤY 1 ITEM TRONG GIỎ THEO CARTDETAIL ID (GET)
+    // MODULE: LẤY 1 ITEM THEO CARTDETAIL ID — GET /api/cartDetail/{id}
     // ==========================================
 
     /**
-     * Test Case ID: TC_CARTDETAIL_03
-     * Mô tả: Lấy thành công một item trong giỏ khi cartDetailId tồn tại.
+     * TC_CARTDETAIL_04
+     * Mục tiêu  : Lấy thành công thông tin một item trong giỏ khi cartDetailId tồn tại.
+     * Đầu vào   : cartDetailId = 1 (tồn tại, quantity=3, price=90000)
+     * Hành vi GS: cartDetailRepository.existsById → true
+     *             cartDetailRepository.findById    → Optional(mockDetail)
+     * Kết quả KV: HTTP 200 OK
+     *             body.cartDetailId = 1
+     *             body.quantity     = 3
+     * Verify    : findById được gọi đúng 1 lần
      */
-    @Test
-    void getOne_testChuan1() throws Exception {
+    @Test // [Happy Path] Lấy 1 item thành công — cartDetailId tồn tại
+    void TC_CARTDETAIL_04() throws Exception {
         Long validDetailId = 1L;
 
         CartDetail mockDetail = new CartDetail();
@@ -150,11 +197,15 @@ class CartDetailApiTest {
     }
 
     /**
-     * Test Case ID: TC_CARTDETAIL_04
-     * Mô tả: Trả về 404 Not Found khi cartDetailId không tồn tại.
+     * TC_CARTDETAIL_05
+     * Mục tiêu  : Trả về 404 khi cartDetailId không tồn tại.
+     * Đầu vào   : cartDetailId = 999 (không có trong DB)
+     * Hành vi GS: cartDetailRepository.existsById → false
+     * Kết quả KV: HTTP 404 Not Found
+     * Verify    : cartDetailRepository.findById KHÔNG được gọi
      */
-    @Test
-    void getOne_testNgoaiLe1() throws Exception {
+    @Test // [Branch Coverage] Nhánh: cartDetailId không tồn tại → 404
+    void TC_CARTDETAIL_05() throws Exception {
         Long invalidDetailId = 999L;
 
         Mockito.when(cartDetailRepository.existsById(invalidDetailId)).thenReturn(false);
@@ -167,15 +218,26 @@ class CartDetailApiTest {
     }
 
     // ==========================================
-    // MODULE: THÊM SẢN PHẨM VÀO GIỎ HÀNG (POST)
+    // MODULE: THÊM SẢN PHẨM VÀO GIỎ HÀNG — POST /api/cartDetail
     // ==========================================
 
     /**
-     * Test Case ID: TC_CARTDETAIL_05
-     * Mô tả: Thêm sản phẩm mới vào giỏ thành công khi sản phẩm chưa có trong giỏ.
+     * TC_CARTDETAIL_06
+     * Mục tiêu  : Thêm sản phẩm chưa có trong giỏ → tạo CartDetail mới.
+     * Đầu vào   : body CartDetail(cartId=1, productId=10, qty=1, price=50000)
+     *             Giỏ hàng hiện tại rỗng (không có item nào)
+     * Hành vi GS: cartRepository.existsById          → true
+     *             productRepository.findByStatusTrue  → [mockProduct]
+     *             productRepository.findByProductIdAndStatusTrue(10) → mockProduct
+     *             cartDetailRepository.findByCart     → [] (rỗng)
+     *             cartDetailRepository.save           → savedDetail(cartDetailId=1)
+     * Kết quả KV: HTTP 200 OK
+     *             body.cartDetailId = 1
+     *             body.quantity     = 1
+     * Verify    : cartDetailRepository.save được gọi đúng 1 lần (tạo mới)
      */
-    @Test
-    void post_testChuan1_themMoi() throws Exception {
+    @Test // [Happy Path] Thêm sản phẩm mới — sản phẩm chưa có trong giỏ → tạo CartDetail mới
+    void TC_CARTDETAIL_06() throws Exception {
         Long cartId = 1L;
         Long productId = 10L;
 
@@ -202,7 +264,6 @@ class CartDetailApiTest {
         Mockito.when(productRepository.findByStatusTrue()).thenReturn(Arrays.asList(mockProduct));
         Mockito.when(productRepository.findByProductIdAndStatusTrue(productId)).thenReturn(mockProduct);
         Mockito.when(cartRepository.findById(cartId)).thenReturn(Optional.of(mockCart));
-        // Giỏ hàng hiện tại rỗng → không có sản phẩm trùng → thêm mới
         Mockito.when(cartDetailRepository.findByCart(mockCart)).thenReturn(Collections.emptyList());
         Mockito.when(cartDetailRepository.save(any(CartDetail.class))).thenReturn(savedDetail);
 
@@ -217,11 +278,19 @@ class CartDetailApiTest {
     }
 
     /**
-     * Test Case ID: TC_CARTDETAIL_06
-     * Mô tả: Thêm sản phẩm đã có trong giỏ → tự động cộng thêm số lượng và giá.
+     * TC_CARTDETAIL_07
+     * Mục tiêu  : Thêm sản phẩm đã có trong giỏ → cộng dồn số lượng và giá, không tạo mới.
+     * Đầu vào   : body CartDetail(productId=10, qty=1, price=50000)
+     *             Giỏ hàng đã có item productId=10 với qty=2, price=100000
+     * Hành vi GS: cartDetailRepository.findByCart → [existingDetail(qty=2, price=100000)]
+     *             cartDetailRepository.save(existingDetail) → updatedDetail(qty=3, price=150000)
+     * Kết quả KV: HTTP 200 OK
+     *             body.quantity = 3   (2 + 1)
+     *             body.price    = 150000.0  (100000 + 50000)
+     * Verify    : save được gọi với existingDetail (cập nhật item cũ, không tạo mới)
      */
-    @Test
-    void post_testChuan2_congSoLuong() throws Exception {
+    @Test // [Branch Coverage] Nhánh: sản phẩm đã có trong giỏ → cộng dồn qty + price
+    void TC_CARTDETAIL_07() throws Exception {
         Long cartId = 1L;
         Long productId = 10L;
 
@@ -231,7 +300,6 @@ class CartDetailApiTest {
         Product mockProduct = new Product();
         mockProduct.setProductId(productId);
 
-        // Item đã có trong giỏ với số lượng 2
         CartDetail existingDetail = new CartDetail();
         existingDetail.setCartDetailId(5L);
         existingDetail.setCart(mockCart);
@@ -239,14 +307,12 @@ class CartDetailApiTest {
         existingDetail.setQuantity(2);
         existingDetail.setPrice(100000.0);
 
-        // Item mới thêm vào (cùng productId)
         CartDetail newDetail = new CartDetail();
         newDetail.setCart(mockCart);
         newDetail.setProduct(mockProduct);
         newDetail.setQuantity(1);
         newDetail.setPrice(50000.0);
 
-        // Item sau khi cộng: quantity = 3, price = 150000
         CartDetail updatedDetail = new CartDetail();
         updatedDetail.setCartDetailId(5L);
         updatedDetail.setQuantity(3);
@@ -256,7 +322,6 @@ class CartDetailApiTest {
         Mockito.when(productRepository.findByStatusTrue()).thenReturn(Arrays.asList(mockProduct));
         Mockito.when(productRepository.findByProductIdAndStatusTrue(productId)).thenReturn(mockProduct);
         Mockito.when(cartRepository.findById(cartId)).thenReturn(Optional.of(mockCart));
-        // Giỏ hàng đã có sản phẩm này
         Mockito.when(cartDetailRepository.findByCart(mockCart)).thenReturn(Arrays.asList(existingDetail));
         Mockito.when(cartDetailRepository.save(existingDetail)).thenReturn(updatedDetail);
 
@@ -267,16 +332,19 @@ class CartDetailApiTest {
                 .andExpect(jsonPath("$.quantity").value(3))
                 .andExpect(jsonPath("$.price").value(150000.0));
 
-        // Phải gọi save (cộng thêm vào item cũ, không tạo mới)
         Mockito.verify(cartDetailRepository).save(existingDetail);
     }
 
     /**
-     * Test Case ID: TC_CARTDETAIL_07
-     * Mô tả: Trả về 404 khi cartId không tồn tại, không lưu gì vào DB.
+     * TC_CARTDETAIL_08
+     * Mục tiêu  : Trả về 404 khi cartId không tồn tại, không lưu gì vào DB.
+     * Đầu vào   : body CartDetail(cartId=999, ...) — cartId không có trong DB
+     * Hành vi GS: cartRepository.existsById → false
+     * Kết quả KV: HTTP 404 Not Found
+     * Verify    : cartDetailRepository.save KHÔNG được gọi
      */
-    @Test
-    void post_testNgoaiLe1_cartKhongTonTai() throws Exception {
+    @Test // [Branch Coverage] Nhánh: cartId không tồn tại → 404, không gọi save
+    void TC_CARTDETAIL_08() throws Exception {
         Long invalidCartId = 999L;
 
         Cart mockCart = new Cart();
@@ -303,11 +371,17 @@ class CartDetailApiTest {
     }
 
     /**
-     * Test Case ID: TC_CARTDETAIL_08
-     * Mô tả: Trả về 404 khi sản phẩm không active (status=false), không lưu vào DB.
+     * TC_CARTDETAIL_09
+     * Mục tiêu  : Trả về 404 khi sản phẩm không active (status=false) — không được thêm vào giỏ.
+     * Đầu vào   : body CartDetail(productId=20) — productId=20 không có trong danh sách active
+     * Hành vi GS: cartRepository.existsById → true
+     *             productRepository.findByStatusTrue → [] (không có sản phẩm active nào)
+     *             productRepository.findByProductIdAndStatusTrue(20) → null
+     * Kết quả KV: HTTP 404 Not Found
+     * Verify    : cartDetailRepository.save KHÔNG được gọi
      */
-    @Test
-    void post_testNgoaiLe2_sanPhamKhongActive() throws Exception {
+    @Test // [Branch Coverage] Nhánh: sản phẩm không active (status=false) → 404
+    void TC_CARTDETAIL_09() throws Exception {
         Long cartId = 1L;
         Long inactiveProductId = 20L;
 
@@ -324,7 +398,6 @@ class CartDetailApiTest {
         newDetail.setPrice(50000.0);
 
         Mockito.when(cartRepository.existsById(cartId)).thenReturn(true);
-        // findByStatusTrue không trả về sản phẩm inactiveProductId
         Mockito.when(productRepository.findByStatusTrue()).thenReturn(Collections.emptyList());
         Mockito.when(productRepository.findByProductIdAndStatusTrue(inactiveProductId)).thenReturn(null);
 
@@ -336,16 +409,76 @@ class CartDetailApiTest {
         Mockito.verify(cartDetailRepository, Mockito.never()).save(any());
     }
 
+    /**
+     * TC_CARTDETAIL_10
+     * Mục tiêu  : Thêm sản phẩm vào giỏ hàng đang rỗng hoàn toàn (lần mua đầu tiên của user).
+     *             Xác nhận sản phẩm được tạo mới (không phải cộng dồn).
+     * Đầu vào   : body CartDetail(cartId=1, productId=10, qty=1, price=75000)
+     *             cartDetailRepository.findByCart → [] (giỏ rỗng)
+     * Hành vi GS: cartDetailRepository.save → savedDetail(cartDetailId=99, price=75000)
+     * Kết quả KV: HTTP 200 OK
+     *             body.cartDetailId = 99
+     *             body.price        = 75000.0
+     * Verify    : save được gọi 1 lần (tạo item mới vì giỏ rỗng, không có gì để cộng dồn)
+     */
+    @Test // [Edge Case] Lần đầu tiên thêm hàng — giỏ rỗng hoàn toàn → tạo item mới
+    void TC_CARTDETAIL_10() throws Exception {
+        Long cartId = 1L;
+        Long productId = 10L;
+
+        Cart mockCart = new Cart();
+        mockCart.setCartId(cartId);
+
+        Product mockProduct = new Product();
+        mockProduct.setProductId(productId);
+
+        CartDetail newDetail = new CartDetail();
+        newDetail.setCart(mockCart);
+        newDetail.setProduct(mockProduct);
+        newDetail.setQuantity(1);
+        newDetail.setPrice(75000.0);
+
+        CartDetail savedDetail = new CartDetail();
+        savedDetail.setCartDetailId(99L);
+        savedDetail.setCart(mockCart);
+        savedDetail.setProduct(mockProduct);
+        savedDetail.setQuantity(1);
+        savedDetail.setPrice(75000.0);
+
+        Mockito.when(cartRepository.existsById(cartId)).thenReturn(true);
+        Mockito.when(productRepository.findByStatusTrue()).thenReturn(Arrays.asList(mockProduct));
+        Mockito.when(productRepository.findByProductIdAndStatusTrue(productId)).thenReturn(mockProduct);
+        Mockito.when(cartRepository.findById(cartId)).thenReturn(Optional.of(mockCart));
+        Mockito.when(cartDetailRepository.findByCart(mockCart)).thenReturn(Collections.emptyList());
+        Mockito.when(cartDetailRepository.save(any(CartDetail.class))).thenReturn(savedDetail);
+
+        mockMvc.perform(post("/api/cartDetail")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(newDetail)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cartDetailId").value(99))
+                .andExpect(jsonPath("$.price").value(75000.0));
+
+        Mockito.verify(cartDetailRepository).save(any(CartDetail.class));
+    }
+
     // ==========================================
-    // MODULE: CẬP NHẬT SỐ LƯỢNG ITEM TRONG GIỎ (PUT)
+    // MODULE: CẬP NHẬT SỐ LƯỢNG ITEM — PUT /api/cartDetail
     // ==========================================
 
     /**
-     * Test Case ID: TC_CARTDETAIL_09
-     * Mô tả: Cập nhật item trong giỏ hàng thành công khi cartId hợp lệ.
+     * TC_CARTDETAIL_11
+     * Mục tiêu  : Cập nhật số lượng và giá của một item trong giỏ hàng thành công.
+     * Đầu vào   : body CartDetail(cartDetailId=5, cartId=1, qty=5, price=250000)
+     * Hành vi GS: cartRepository.existsById          → true
+     *             cartDetailRepository.save           → detailToUpdate(qty=5, price=250000)
+     * Kết quả KV: HTTP 200 OK
+     *             body.quantity = 5
+     *             body.price    = 250000.0
+     * Verify    : cartDetailRepository.save được gọi đúng 1 lần
      */
-    @Test
-    void put_testChuan1() throws Exception {
+    @Test // [Happy Path] Cập nhật qty và price của item thành công
+    void TC_CARTDETAIL_11() throws Exception {
         Long cartId = 1L;
 
         Cart mockCart = new Cart();
@@ -372,11 +505,15 @@ class CartDetailApiTest {
     }
 
     /**
-     * Test Case ID: TC_CARTDETAIL_10
-     * Mô tả: Trả về 404 khi cập nhật item nhưng cartId không tồn tại.
+     * TC_CARTDETAIL_12
+     * Mục tiêu  : Trả về 404 khi cập nhật item nhưng cartId không tồn tại.
+     * Đầu vào   : body CartDetail(cartId=999, ...) — cartId không có trong DB
+     * Hành vi GS: cartRepository.existsById → false
+     * Kết quả KV: HTTP 404 Not Found
+     * Verify    : cartDetailRepository.save KHÔNG được gọi
      */
-    @Test
-    void put_testNgoaiLe1() throws Exception {
+    @Test // [Branch Coverage] Nhánh: cartId không tồn tại khi PUT → 404, không save
+    void TC_CARTDETAIL_12() throws Exception {
         Long invalidCartId = 999L;
 
         Cart mockCart = new Cart();
@@ -399,15 +536,19 @@ class CartDetailApiTest {
     }
 
     // ==========================================
-    // MODULE: XÓA ITEM KHỎI GIỎ HÀNG (DELETE)
+    // MODULE: XÓA ITEM KHỎI GIỎ HÀNG — DELETE /api/cartDetail/{id}
     // ==========================================
 
     /**
-     * Test Case ID: TC_CARTDETAIL_11
-     * Mô tả: Xóa item khỏi giỏ hàng thành công khi cartDetailId tồn tại.
+     * TC_CARTDETAIL_13
+     * Mục tiêu  : Xóa item khỏi giỏ hàng thành công khi cartDetailId tồn tại.
+     * Đầu vào   : cartDetailId = 5 (tồn tại)
+     * Hành vi GS: cartDetailRepository.existsById → true
+     * Kết quả KV: HTTP 200 OK
+     * Verify    : deleteById(5) được gọi đúng 1 lần
      */
-    @Test
-    void delete_testChuan1() throws Exception {
+    @Test // [Happy Path] Xóa item thành công — cartDetailId tồn tại
+    void TC_CARTDETAIL_13() throws Exception {
         Long validDetailId = 5L;
 
         Mockito.when(cartDetailRepository.existsById(validDetailId)).thenReturn(true);
@@ -420,11 +561,15 @@ class CartDetailApiTest {
     }
 
     /**
-     * Test Case ID: TC_CARTDETAIL_12
-     * Mô tả: Trả về 404 Not Found khi xóa item không tồn tại, không gọi deleteById.
+     * TC_CARTDETAIL_14
+     * Mục tiêu  : Trả về 404 khi xóa item không tồn tại, deleteById không được gọi.
+     * Đầu vào   : cartDetailId = 999 (không có trong DB)
+     * Hành vi GS: cartDetailRepository.existsById → false
+     * Kết quả KV: HTTP 404 Not Found
+     * Verify    : cartDetailRepository.deleteById KHÔNG được gọi
      */
-    @Test
-    void delete_testNgoaiLe1() throws Exception {
+    @Test // [Branch Coverage] Nhánh: cartDetailId không tồn tại → 404, không gọi deleteById
+    void TC_CARTDETAIL_14() throws Exception {
         Long invalidDetailId = 999L;
 
         Mockito.when(cartDetailRepository.existsById(invalidDetailId)).thenReturn(false);
