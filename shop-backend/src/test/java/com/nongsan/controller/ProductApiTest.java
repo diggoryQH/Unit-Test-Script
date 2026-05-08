@@ -60,7 +60,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_01
+     * Test Case ID: TC_PRO_01
      * Mô tả: Lấy danh sách sản phẩm thành công khi ID danh mục tồn tại.
      */
     @Test
@@ -87,7 +87,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_02
+     * Test Case ID: TC_PRO_02
      * Mô tả: Báo lỗi Not Found khi cố lấy sản phẩm của danh mục không tồn tại.
      */
     @Test
@@ -108,7 +108,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_03
+     * Test Case ID: TC_PRO_03
      * Mô tả: Lấy sản phẩm thành công khi ID sản phẩm tồn tại.
      */
     @Test
@@ -131,7 +131,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_04
+     * Test Case ID: TC_PRO_04
      * Mô tả: Báo lỗi Not Found khi ID sản phẩm không tồn tại.
      */
     @Test
@@ -152,7 +152,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_05
+     * Test Case ID: TC_PRO_05
      * Mô tả: Thêm mới sản phẩm thành công khi thông tin hợp lệ và ID chưa tồn tại.
      */
     @Test
@@ -174,7 +174,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_06
+     * Test Case ID: TC_PRO_06
      * Mô tả: Thêm mới sản phẩm thất bại (Bad Request) nếu ID đã tồn tại trong DB.
      */
     @Test
@@ -197,7 +197,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_07
+     * Test Case ID: TC_PRO_07
      * Mô tả: Cập nhật sản phẩm thành công khi thông tin hợp lệ, ID khớp và đã có trong DB.
      */
     @Test
@@ -221,7 +221,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_08
+     * Test Case ID: TC_PRO_08
      * Mô tả: Cập nhật thất bại khi ID trên URL Path KHÔNG khớp với ID của body JSON.
      */
     @Test
@@ -241,7 +241,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_09
+     * Test Case ID: TC_PRO_09
      * Mô tả: Cập nhật thất bại khi ID tồn tại trên path nhưng không tồn tại trong database.
      */
     @Test
@@ -267,7 +267,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_10
+     * Test Case ID: TC_PRO_10
      * Mô tả: Xóa mềm sản phẩm (cập nhật status = false) thành công.
      */
     @Test
@@ -290,7 +290,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_11
+     * Test Case ID: TC_PRO_11
      * Mô tả: Xóa sản phẩm thất bại khi ID không tồn tại.
      */
     @Test
@@ -312,7 +312,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_12
+     * Test Case ID: TC_PRO_12
      * Mô tả: Import danh sách sản phẩm thành công thông qua hàm saveAll.
      */
     @Test
@@ -343,7 +343,7 @@ class ProductApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_13
+     * Test Case ID: TC_PRO_13
      * Mô tả: Lấy tất cả sản phẩm đang có trạng thái kích hoạt (status = true).
      */
     @Test
@@ -361,7 +361,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_14
+     * Test Case ID: TC_PRO_14
      * Mô tả: Lấy danh sách sản phẩm bán chạy nhất cho User (status = true, sort by sold desc).
      */
     @Test
@@ -375,7 +375,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_15
+     * Test Case ID: TC_PRO_15
      * Mô tả: Lấy top 10 sản phẩm bán chạy nhất cho Admin (bỏ qua status).
      */
     @Test
@@ -389,7 +389,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_16
+     * Test Case ID: TC_PRO_16
      * Mô tả: Lấy danh sách sản phẩm mới nhất (sắp xếp theo EnteredDate).
      */
     @Test
@@ -403,7 +403,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_17
+     * Test Case ID: TC_PRO_17
      * Mô tả: Lấy danh sách sản phẩm được đánh giá cao.
      */
     @Test
@@ -417,7 +417,7 @@ class ProductApiTest {
     }
 
     /**
-     * Test Case ID: TC_18
+     * Test Case ID: TC_PRO_18
      * Mô tả: Lấy danh sách sản phẩm gợi ý dựa trên categoryId và productId.
      */
     @Test

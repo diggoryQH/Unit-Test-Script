@@ -100,8 +100,16 @@
 				<artifactId>commons-codec</artifactId>
 				<version>1.16.0</version>
 		</dependency>
-
-		<!-- Selenium WebDriver -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			</dependency>
+				<!-- Selenium WebDriver -->
 		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
 			<artifactId>selenium-java</artifactId>
@@ -173,13 +181,6 @@
 			<groupId>com.aventstack</groupId>
 			<artifactId>extentreports</artifactId>
 			<version>5.1.1</version>
-		</dependency>
-
-		<!-- H2 Database cho unit test -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>test</scope>
 		</dependency>
 
 	</dependencies>
@@ -259,6 +260,7 @@
 						<exclude>com/nongsan/dto/**</exclude>
 						<exclude>com/nongsan/config/**</exclude>
 						<exclude>com/nongsan/NongSanApplication.class</exclude>
+						<exclude>com/nongsan/utils/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
