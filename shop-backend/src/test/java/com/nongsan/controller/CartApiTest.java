@@ -65,20 +65,22 @@ class CartApiTest {
     // ==========================================
 
     /**
-     * TC_CART_01
-     * Mục tiêu  : Lấy giỏ hàng thành công khi email người dùng tồn tại trong hệ thống.
-     * Đầu vào   : email = "user@gmail.com" (tồn tại trong DB)
+     * TC_CRT_01
+     * Mục tiêu : Lấy giỏ hàng thành công khi email người dùng tồn tại trong hệ
+     * thống.
+     * Đầu vào : email = "user@gmail.com" (tồn tại trong DB)
      * Hành vi GS: userRepository.existsByEmail → true
-     *             userRepository.findByEmail   → Optional(mockUser)
-     *             cartRepository.findByUser    → mockCart(cartId=1, address="Hà Nội", phone="0912345678")
+     * userRepository.findByEmail → Optional(mockUser)
+     * cartRepository.findByUser → mockCart(cartId=1, address="Hà Nội",
+     * phone="0912345678")
      * Kết quả KV: HTTP 200 OK
-     *             body.cartId   = 1
-     *             body.address  = "Hà Nội"
-     *             body.phone    = "0912345678"
-     * Verify    : cartRepository.findByUser được gọi đúng 1 lần
+     * body.cartId = 1
+     * body.address = "Hà Nội"
+     * body.phone = "0912345678"
+     * Verify : cartRepository.findByUser được gọi đúng 1 lần
      */
     @Test // [Happy Path] Lấy giỏ hàng thành công — email tồn tại
-    void TC_CART_01() throws Exception {
+    void TC_CRT_01() throws Exception {
         String validEmail = "user@gmail.com";
 
         User mockUser = new User();
@@ -106,15 +108,16 @@ class CartApiTest {
     }
 
     /**
-     * TC_CART_02
-     * Mục tiêu  : Trả về 404 khi email người dùng không tồn tại trong hệ thống.
-     * Đầu vào   : email = "notfound@gmail.com" (không có trong DB)
+     * TC_CRT_02
+     * Mục tiêu : Trả về 404 khi email người dùng không tồn tại trong hệ thống.
+     * Đầu vào : email = "notfound@gmail.com" (không có trong DB)
      * Hành vi GS: userRepository.existsByEmail → false
      * Kết quả KV: HTTP 404 Not Found
-     * Verify    : cartRepository.findByUser KHÔNG được gọi (early return sau khi check email)
+     * Verify : cartRepository.findByUser KHÔNG được gọi (early return sau khi check
+     * email)
      */
     @Test // [Branch Coverage] Nhánh: email không tồn tại → 404
-    void TC_CART_02() throws Exception {
+    void TC_CRT_02() throws Exception {
         String invalidEmail = "notfound@gmail.com";
 
         Mockito.when(userRepository.existsByEmail(invalidEmail)).thenReturn(false);
@@ -127,18 +130,19 @@ class CartApiTest {
     }
 
     /**
-     * TC_CART_03
-     * Mục tiêu  : Lấy giỏ hàng của user mới chưa thêm sản phẩm nào (giỏ rỗng).
-     *             Xác nhận hệ thống trả về 200 thay vì lỗi khi amount=0, address=null.
-     * Đầu vào   : email = "newuser@gmail.com" (tồn tại), cart chưa có item (amount=0)
-     * Hành vi GS: cartRepository.findByUser → Cart(cartId=5, amount=0, address=null, phone=null)
+     * TC_CRT_03
+     * Mục tiêu : Lấy giỏ hàng của user mới chưa thêm sản phẩm nào (giỏ rỗng).
+     * Xác nhận hệ thống trả về 200 thay vì lỗi khi amount=0, address=null.
+     * Đầu vào : email = "newuser@gmail.com" (tồn tại), cart chưa có item (amount=0)
+     * Hành vi GS: cartRepository.findByUser → Cart(cartId=5, amount=0,
+     * address=null, phone=null)
      * Kết quả KV: HTTP 200 OK
-     *             body.cartId = 5
-     *             body.amount = 0.0
-     * Verify    : cartRepository.findByUser được gọi đúng 1 lần
+     * body.cartId = 5
+     * body.amount = 0.0
+     * Verify : cartRepository.findByUser được gọi đúng 1 lần
      */
     @Test // [Edge Case] User hợp lệ nhưng giỏ hàng chưa có item (amount=0)
-    void TC_CART_03() throws Exception {
+    void TC_CRT_03() throws Exception {
         String email = "newuser@gmail.com";
 
         User mockUser = new User();
@@ -168,19 +172,20 @@ class CartApiTest {
     // ==========================================
 
     /**
-     * TC_CART_04
-     * Mục tiêu  : Cập nhật thành công địa chỉ và số điện thoại trong giỏ hàng.
-     * Đầu vào   : email = "user@gmail.com" (tồn tại), body Cart hợp lệ
+     * TC_CRT_04
+     * Mục tiêu : Cập nhật thành công địa chỉ và số điện thoại trong giỏ hàng.
+     * Đầu vào : email = "user@gmail.com" (tồn tại), body Cart hợp lệ
      * Hành vi GS: userRepository.existsByEmail → true
-     *             cartRepository.save          → Cart đã cập nhật (address="TP. HCM", phone="0987654321")
+     * cartRepository.save → Cart đã cập nhật (address="TP. HCM",
+     * phone="0987654321")
      * Kết quả KV: HTTP 200 OK
-     *             body.cartId  = 1
-     *             body.address = "TP. Hồ Chí Minh"
-     *             body.phone   = "0987654321"
-     * Verify    : cartRepository.save được gọi đúng 1 lần
+     * body.cartId = 1
+     * body.address = "TP. Hồ Chí Minh"
+     * body.phone = "0987654321"
+     * Verify : cartRepository.save được gọi đúng 1 lần
      */
     @Test // [Happy Path] Cập nhật giỏ hàng thành công — email tồn tại, body hợp lệ
-    void TC_CART_04() throws Exception {
+    void TC_CRT_04() throws Exception {
         String validEmail = "user@gmail.com";
 
         User mockUser = new User();
@@ -197,8 +202,8 @@ class CartApiTest {
         Mockito.when(cartRepository.save(any(Cart.class))).thenReturn(cartToUpdate);
 
         mockMvc.perform(put("/api/cart/user/{email}", validEmail)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(cartToUpdate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(cartToUpdate)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cartId").value(1))
                 .andExpect(jsonPath("$.address").value("TP. Hồ Chí Minh"))
@@ -209,15 +214,16 @@ class CartApiTest {
     }
 
     /**
-     * TC_CART_05
-     * Mục tiêu  : Trả về 404 khi email không tồn tại, đảm bảo không lưu dữ liệu vào DB.
-     * Đầu vào   : email = "ghost@gmail.com" (không tồn tại), body Cart bất kỳ
+     * TC_CRT_05
+     * Mục tiêu : Trả về 404 khi email không tồn tại, đảm bảo không lưu dữ liệu vào
+     * DB.
+     * Đầu vào : email = "ghost@gmail.com" (không tồn tại), body Cart bất kỳ
      * Hành vi GS: userRepository.existsByEmail → false
      * Kết quả KV: HTTP 404 Not Found
-     * Verify    : cartRepository.save KHÔNG được gọi (không được ghi DB khi email sai)
+     * Verify : cartRepository.save KHÔNG được gọi (không được ghi DB khi email sai)
      */
     @Test // [Branch Coverage] Nhánh: email không tồn tại → 404, không gọi save
-    void TC_CART_05() throws Exception {
+    void TC_CRT_05() throws Exception {
         String invalidEmail = "ghost@gmail.com";
 
         Cart cartPayload = new Cart();
@@ -227,8 +233,8 @@ class CartApiTest {
         Mockito.when(userRepository.existsByEmail(invalidEmail)).thenReturn(false);
 
         mockMvc.perform(put("/api/cart/user/{email}", invalidEmail)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(cartPayload)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(cartPayload)))
                 .andExpect(status().isNotFound());
 
         Mockito.verify(userRepository).existsByEmail(invalidEmail);
@@ -236,18 +242,19 @@ class CartApiTest {
     }
 
     /**
-     * TC_CART_06
-     * Mục tiêu  : Cập nhật cart với địa chỉ rất dài — kiểm tra Controller không validate
-     *             độ dài chuỗi, dữ liệu được lưu nguyên vẹn xuống DB.
-     * Đầu vào   : email hợp lệ, address = chuỗi dài 95 ký tự
+     * TC_CRT_06
+     * Mục tiêu : Cập nhật cart với địa chỉ rất dài — kiểm tra Controller không
+     * validate
+     * độ dài chuỗi, dữ liệu được lưu nguyên vẹn xuống DB.
+     * Đầu vào : email hợp lệ, address = chuỗi dài 95 ký tự
      * Hành vi GS: userRepository.existsByEmail → true
-     *             cartRepository.save          → Cart với address dài
+     * cartRepository.save → Cart với address dài
      * Kết quả KV: HTTP 200 OK
-     *             body.address = chuỗi địa chỉ dài đúng như đã gửi
-     * Verify    : cartRepository.save được gọi đúng 1 lần
+     * body.address = chuỗi địa chỉ dài đúng như đã gửi
+     * Verify : cartRepository.save được gọi đúng 1 lần
      */
     @Test // [Edge Case] Địa chỉ rất dài — Controller không validate độ dài, lưu nguyên
-    void TC_CART_06() throws Exception {
+    void TC_CRT_06() throws Exception {
         String email = "user@gmail.com";
         String longAddress = "Số 1, Đường Nguyễn Trãi, Phường Thượng Đình, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam";
 
@@ -263,8 +270,8 @@ class CartApiTest {
         Mockito.when(cartRepository.save(any(Cart.class))).thenReturn(cartWithLongAddress);
 
         mockMvc.perform(put("/api/cart/user/{email}", email)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(cartWithLongAddress)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(cartWithLongAddress)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.address").value(longAddress));
 

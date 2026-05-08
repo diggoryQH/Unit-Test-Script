@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * REQ-04: Đặt hàng & Thanh toán
  * Unit test cho: VNPayService.java (không cần Spring context)
  * Hàm:
- *   - createOrder(Long total, String orderInfor, String urlReturn)
- *   - orderReturn(HttpServletRequest request)
+ * - createOrder(Long total, String orderInfor, String urlReturn)
+ * - orderReturn(HttpServletRequest request)
  */
 class VNPayServiceTest {
 
@@ -25,7 +25,8 @@ class VNPayServiceTest {
 
     @BeforeEach
     void setUp() {
-        // VNPayService không có dependency @Autowired → khởi tạo trực tiếp (pure unit test)
+        // VNPayService không có dependency @Autowired → khởi tạo trực tiếp (pure unit
+        // test)
         vnPayService = new VNPayService();
     }
 
@@ -34,22 +35,24 @@ class VNPayServiceTest {
     // ==========================================
 
     /**
-     * TC_VNPAYSERVICE_01
-     * Mục tiêu  : Tạo URL thanh toán thành công với amount hợp lệ.
-     *             Xác minh URL chứa đầy đủ các tham số bắt buộc của VNPay.
-     * Đầu vào   : total=100000L, orderInfo="Thanh toan don hang", urlReturn="http://localhost:4200"
+     * TC_VPS_01
+     * Mục tiêu : Tạo URL thanh toán thành công với amount hợp lệ.
+     * Xác minh URL chứa đầy đủ các tham số bắt buộc của VNPay.
+     * Đầu vào : total=100000L, orderInfo="Thanh toan don hang",
+     * urlReturn="http://localhost:4200"
      * Kết quả KV: resultUrl != null
-     *             resultUrl bắt đầu bằng "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-     *             URL chứa: vnp_TmnCode=ITNF0PR5
-     *             URL chứa: vnp_Amount=10000000  (100000 * 100)
-     *             URL chứa: vnp_CurrCode=VND
-     *             URL chứa: vnp_SecureHash=
-     *             URL chứa: vnp_ReturnUrl=
-     *             URL chứa: vnp_Version=2.1.0
-     *             URL chứa: vnp_Command=pay
+     * resultUrl bắt đầu bằng "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+     * URL chứa: vnp_TmnCode=ITNF0PR5
+     * URL chứa: vnp_Amount=10000000 (100000 * 100)
+     * URL chứa: vnp_CurrCode=VND
+     * URL chứa: vnp_SecureHash=
+     * URL chứa: vnp_ReturnUrl=
+     * URL chứa: vnp_Version=2.1.0
+     * URL chứa: vnp_Command=pay
      */
-    @Test // [Happy Path] Tạo URL hợp lệ — amount chuẩn, URL chứa đủ tham số bắt buộc VNPay
-    void TC_VNPAYSERVICE_01() {
+    @Test // [Happy Path] Tạo URL hợp lệ — amount chuẩn, URL chứa đủ tham số bắt buộc
+          // VNPay
+    void TC_VPS_01() {
         Long amount = 100000L;
         String orderInfo = "Thanh toan don hang";
         String urlReturn = "http://localhost:4200";
@@ -69,15 +72,16 @@ class VNPayServiceTest {
     }
 
     /**
-     * TC_VNPAYSERVICE_02
-     * Mục tiêu  : Tạo URL với amount rất lớn (đơn hàng 10 triệu VND) — kiểm tra không overflow.
-     * Đầu vào   : total = 10000000L (10 triệu VND)
+     * TC_VPS_02
+     * Mục tiêu : Tạo URL với amount rất lớn (đơn hàng 10 triệu VND) — kiểm tra
+     * không overflow.
+     * Đầu vào : total = 10000000L (10 triệu VND)
      * Kết quả KV: resultUrl != null
-     *             URL chứa: vnp_Amount=1000000000  (10_000_000 * 100)
-     *             URL chứa: vnp_SecureHash= (chữ ký vẫn được tạo bình thường)
+     * URL chứa: vnp_Amount=1000000000 (10_000_000 * 100)
+     * URL chứa: vnp_SecureHash= (chữ ký vẫn được tạo bình thường)
      */
     @Test // [Edge Case] Amount rất lớn (10 triệu VND) — kiểm tra không overflow
-    void TC_VNPAYSERVICE_02() {
+    void TC_VPS_02() {
         Long amount = 10000000L;
         String orderInfo = "Don hang lon";
         String urlReturn = "http://localhost:4200";
@@ -91,14 +95,15 @@ class VNPayServiceTest {
     }
 
     /**
-     * TC_VNPAYSERVICE_03
-     * Mục tiêu  : Tạo URL với amount = 1 (giá trị nhỏ nhất có ý nghĩa) — kiểm tra giá trị biên.
-     * Đầu vào   : total = 1L
-     * Kết quả KV: URL chứa: vnp_Amount=100  (1 * 100)
-     *             URL không null và hợp lệ
+     * TC_VPS_03
+     * Mục tiêu : Tạo URL với amount = 1 (giá trị nhỏ nhất có ý nghĩa) — kiểm tra
+     * giá trị biên.
+     * Đầu vào : total = 1L
+     * Kết quả KV: URL chứa: vnp_Amount=100 (1 * 100)
+     * URL không null và hợp lệ
      */
     @Test // [Edge Case] Amount = 1 (giá trị biên nhỏ nhất) — vnp_Amount phải = 100
-    void TC_VNPAYSERVICE_03() {
+    void TC_VPS_03() {
         Long amount = 1L;
         String orderInfo = "Test don hang nho";
         String urlReturn = "http://localhost:4200";
@@ -112,20 +117,22 @@ class VNPayServiceTest {
 
     // ==========================================
     // MODULE: XÁC THỰC CALLBACK VNPAY — orderReturn()
-    // Nhánh 1: signValue == secureHash && status=="00"  → return 1
-    // Nhánh 2: signValue == secureHash && status!="00"  → return 0
-    // Nhánh 3: signValue != secureHash                  → return -1
+    // Nhánh 1: signValue == secureHash && status=="00" → return 1
+    // Nhánh 2: signValue == secureHash && status!="00" → return 0
+    // Nhánh 3: signValue != secureHash → return -1
     // ==========================================
 
     /**
-     * TC_VNPAYSERVICE_04
-     * Mục tiêu  : Chữ ký HMAC-SHA512 hợp lệ, TransactionStatus = "00" → giao dịch thành công.
-     * Đầu vào   : MockHttpServletRequest với đầy đủ params, vnp_TransactionStatus="00"
-     *             vnp_SecureHash được tính đúng từ VnPayConfig.hashAllFields()
+     * TC_VPS_04
+     * Mục tiêu : Chữ ký HMAC-SHA512 hợp lệ, TransactionStatus = "00" → giao dịch
+     * thành công.
+     * Đầu vào : MockHttpServletRequest với đầy đủ params,
+     * vnp_TransactionStatus="00"
+     * vnp_SecureHash được tính đúng từ VnPayConfig.hashAllFields()
      * Kết quả KV: result = 1
      */
     @Test // [Happy Path] Chữ ký đúng + TransactionStatus=00 → return 1 (thành công)
-    void TC_VNPAYSERVICE_04() throws Exception {
+    void TC_VPS_04() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
         Map<String, String> params = new HashMap<>();
@@ -153,14 +160,17 @@ class VNPayServiceTest {
     }
 
     /**
-     * TC_VNPAYSERVICE_05
-     * Mục tiêu  : Chữ ký hợp lệ nhưng TransactionStatus ≠ "00" (user hủy, mã 02) → giao dịch thất bại.
-     * Đầu vào   : MockHttpServletRequest, vnp_TransactionStatus="02", vnp_ResponseCode="24"
-     *             vnp_SecureHash được tính đúng từ VnPayConfig.hashAllFields()
+     * TC_VPS_05
+     * Mục tiêu : Chữ ký hợp lệ nhưng TransactionStatus ≠ "00" (user hủy, mã 02) →
+     * giao dịch thất bại.
+     * Đầu vào : MockHttpServletRequest, vnp_TransactionStatus="02",
+     * vnp_ResponseCode="24"
+     * vnp_SecureHash được tính đúng từ VnPayConfig.hashAllFields()
      * Kết quả KV: result = 0
      */
-    @Test // [Branch Coverage] Nhánh: chữ ký đúng nhưng TransactionStatus≠00 → return 0 (thất bại)
-    void TC_VNPAYSERVICE_05() throws Exception {
+    @Test // [Branch Coverage] Nhánh: chữ ký đúng nhưng TransactionStatus≠00 → return 0
+          // (thất bại)
+    void TC_VPS_05() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
         Map<String, String> params = new HashMap<>();
@@ -188,14 +198,16 @@ class VNPayServiceTest {
     }
 
     /**
-     * TC_VNPAYSERVICE_06
-     * Mục tiêu  : Chữ ký HMAC-SHA512 không khớp (request giả mạo hoặc bị tampered) → bảo mật thất bại.
-     * Đầu vào   : MockHttpServletRequest với vnp_SecureHash = "INVALID_FAKE_HASH_XYZ_123456"
-     *             (không khớp với dữ liệu params)
+     * TC_VPS_06
+     * Mục tiêu : Chữ ký HMAC-SHA512 không khớp (request giả mạo hoặc bị tampered) →
+     * bảo mật thất bại.
+     * Đầu vào : MockHttpServletRequest với vnp_SecureHash =
+     * "INVALID_FAKE_HASH_XYZ_123456"
+     * (không khớp với dữ liệu params)
      * Kết quả KV: result = -1
      */
     @Test // [Branch Coverage] Nhánh: chữ ký không khớp (request giả mạo) → return -1
-    void TC_VNPAYSERVICE_06() {
+    void TC_VPS_06() {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
         request.addParameter("vnp_Amount", "10000000");
@@ -210,14 +222,14 @@ class VNPayServiceTest {
     }
 
     /**
-     * TC_VNPAYSERVICE_07
-     * Mục tiêu  : Request hoàn toàn rỗng — không có bất kỳ tham số VNPay nào.
-     *             Kịch bản: Hacker gọi thẳng API không truyền params.
-     * Đầu vào   : MockHttpServletRequest trống (không addParameter gì cả)
+     * TC_VPS_07
+     * Mục tiêu : Request hoàn toàn rỗng — không có bất kỳ tham số VNPay nào.
+     * Kịch bản: Hacker gọi thẳng API không truyền params.
+     * Đầu vào : MockHttpServletRequest trống (không addParameter gì cả)
      * Kết quả KV: result = -1 (hash rỗng không khớp → sai chữ ký)
      */
     @Test // [Edge Case] Request hoàn toàn rỗng, không có tham số VNPay nào → return -1
-    void TC_VNPAYSERVICE_07() {
+    void TC_VPS_07() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         // Không thêm bất kỳ tham số nào
 

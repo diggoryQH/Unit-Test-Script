@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 /**
  * Lớp kiểm thử cho GHNService (Tích hợp Giao Hàng Nhanh).
  */
-class GHNServiceTest {
+class GHNServiceTest1 {
 
     private GHNService ghnService;
 
@@ -30,31 +30,29 @@ class GHNServiceTest {
 
     /**
      * Test Case ID: TC_GHN_01
-     * Mô tả: Tính phí thành công khi API GHN trả về đúng định dạng (code = 200, có total fee).
+     * Mô tả: Tính phí thành công khi API GHN trả về đúng định dạng (code = 200, có
+     * total fee).
      */
     @Test
     void calculateFee_testChuan1() {
-        try (MockedConstruction<RestTemplate> mocked =
-                     Mockito.mockConstruction(RestTemplate.class,
-                             (mock, context) -> {
+        try (MockedConstruction<RestTemplate> mocked = Mockito.mockConstruction(RestTemplate.class,
+                (mock, context) -> {
 
-                                 // Giả lập dữ liệu trả về thành công từ GHN
-                                 GHNFeeResponse responseObj = new GHNFeeResponse();
-                                 responseObj.setCode(200);
+                    // Giả lập dữ liệu trả về thành công từ GHN
+                    GHNFeeResponse responseObj = new GHNFeeResponse();
+                    responseObj.setCode(200);
 
-                                 FeeData data = new FeeData();
-                                 data.setTotal(35000.0);
-                                 responseObj.setData(data);
+                    FeeData data = new FeeData();
+                    data.setTotal(35000.0);
+                    responseObj.setData(data);
 
-                                 when(mock.exchange(
-                                         anyString(),
-                                         eq(HttpMethod.GET),
-                                         any(),
-                                         eq(GHNFeeResponse.class)
-                                 )).thenReturn(
-                                         new ResponseEntity<>(responseObj, HttpStatus.OK)
-                                 );
-                             })) {
+                    when(mock.exchange(
+                            anyString(),
+                            eq(HttpMethod.GET),
+                            any(),
+                            eq(GHNFeeResponse.class))).thenReturn(
+                                    new ResponseEntity<>(responseObj, HttpStatus.OK));
+                })) {
 
             Double result = ghnService.calculateFee("20308", 1454, 500);
 
@@ -69,22 +67,19 @@ class GHNServiceTest {
      */
     @Test
     void calculateFee_testNgoaile1() {
-        try (MockedConstruction<RestTemplate> mocked =
-                     Mockito.mockConstruction(RestTemplate.class,
-                             (mock, context) -> {
+        try (MockedConstruction<RestTemplate> mocked = Mockito.mockConstruction(RestTemplate.class,
+                (mock, context) -> {
 
-                                 GHNFeeResponse responseObj = new GHNFeeResponse();
-                                 responseObj.setCode(400); // Mã code lỗi
+                    GHNFeeResponse responseObj = new GHNFeeResponse();
+                    responseObj.setCode(400); // Mã code lỗi
 
-                                 when(mock.exchange(
-                                         anyString(),
-                                         eq(HttpMethod.GET),
-                                         any(),
-                                         eq(GHNFeeResponse.class)
-                                 )).thenReturn(
-                                         new ResponseEntity<>(responseObj, HttpStatus.OK)
-                                 );
-                             })) {
+                    when(mock.exchange(
+                            anyString(),
+                            eq(HttpMethod.GET),
+                            any(),
+                            eq(GHNFeeResponse.class))).thenReturn(
+                                    new ResponseEntity<>(responseObj, HttpStatus.OK));
+                })) {
 
             Double result = ghnService.calculateFee("20308", 1454, 500);
 
@@ -99,20 +94,17 @@ class GHNServiceTest {
      */
     @Test
     void calculateFee_testNgoaile2() {
-        try (MockedConstruction<RestTemplate> mocked =
-                     Mockito.mockConstruction(RestTemplate.class,
-                             (mock, context) -> {
+        try (MockedConstruction<RestTemplate> mocked = Mockito.mockConstruction(RestTemplate.class,
+                (mock, context) -> {
 
-                                 // Trả về body rỗng
-                                 when(mock.exchange(
-                                         anyString(),
-                                         eq(HttpMethod.GET),
-                                         any(),
-                                         eq(GHNFeeResponse.class)
-                                 )).thenReturn(
-                                         new ResponseEntity<>(null, HttpStatus.OK)
-                                 );
-                             })) {
+                    // Trả về body rỗng
+                    when(mock.exchange(
+                            anyString(),
+                            eq(HttpMethod.GET),
+                            any(),
+                            eq(GHNFeeResponse.class))).thenReturn(
+                                    new ResponseEntity<>(null, HttpStatus.OK));
+                })) {
 
             Double result = ghnService.calculateFee("20308", 1454, 500);
 
@@ -127,18 +119,16 @@ class GHNServiceTest {
      */
     @Test
     void calculateFee_testNgoaile3() {
-        try (MockedConstruction<RestTemplate> mocked =
-                     Mockito.mockConstruction(RestTemplate.class,
-                             (mock, context) -> {
+        try (MockedConstruction<RestTemplate> mocked = Mockito.mockConstruction(RestTemplate.class,
+                (mock, context) -> {
 
-                                 // Giả lập rớt mạng ném Exception
-                                 when(mock.exchange(
-                                         anyString(),
-                                         eq(HttpMethod.GET),
-                                         any(),
-                                         eq(GHNFeeResponse.class)
-                                 )).thenThrow(new RuntimeException("API lỗi kết nối mạng"));
-                             })) {
+                    // Giả lập rớt mạng ném Exception
+                    when(mock.exchange(
+                            anyString(),
+                            eq(HttpMethod.GET),
+                            any(),
+                            eq(GHNFeeResponse.class))).thenThrow(new RuntimeException("API lỗi kết nối mạng"));
+                })) {
 
             Double result = ghnService.calculateFee("20308", 1454, 500);
 
