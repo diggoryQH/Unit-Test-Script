@@ -32,10 +32,14 @@ public interface StatisticalRepository extends JpaRepository<Product, Long> {
 
 	// SQL tính Lợi nhuận gộp (Doanh thu - Giá vốn - Phí ship) cho 1 năm cụ thể
 	@Query(value = "SELECT " +
-			"SUM(o.amount - o.shipping_fee) as total_revenue, " +
+			"revenue.total_revenue, " +
 			"SUM(od.quantity * p.cost_price) as total_cost, " +
-			"SUM(o.shipping_fee) as total_shipping " +
-			"FROM orders o " +
+			"revenue.total_shipping " +
+			"FROM (" +
+			"  SELECT SUM(amount - shipping_fee) as total_revenue, SUM(shipping_fee) as total_shipping " +
+			"  FROM orders WHERE YEAR(order_date) = ?1 AND status = 2" +
+			") revenue, " +
+			"orders o " +
 			"JOIN order_details od ON o.orders_id = od.order_id " +
 			"JOIN products p ON od.product_id = p.product_id " +
 			"WHERE YEAR(o.order_date) = ?1 AND o.status = 2", nativeQuery = true)

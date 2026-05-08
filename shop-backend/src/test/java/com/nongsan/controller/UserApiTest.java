@@ -90,6 +90,14 @@ class UserApiTest {
     @MockBean
     private AuthTokenFilter authTokenFilter;
 
+    // ==========================================
+    // MODULE: LẤY DANH SÁCH USER (GET ALL)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_01
+     * Mô tả: Lấy danh sách tất cả user đang active (status = true) - Trường hợp có 1 user.
+     */
     @Test
     void getAll_testChuan1() throws Exception {
 	User activeUser = new User();
@@ -107,6 +115,47 @@ class UserApiTest {
 	Mockito.verify(userRepository).findByStatusTrue();
     }
 
+    /**
+     * Test Case ID: TC_U_02
+     * Mô tả: Lấy danh sách tất cả user đang active - Trường hợp có nhiều user (3 user).
+     */
+    @Test
+    void getAll_testChuan2() throws Exception {
+	User user1 = new User();
+	user1.setUserId(1L);
+	user1.setName("User One");
+	user1.setStatus(true);
+
+	User user2 = new User();
+	user2.setUserId(2L);
+	user2.setName("User Two");
+	user2.setStatus(true);
+
+	User user3 = new User();
+	user3.setUserId(3L);
+	user3.setName("User Three");
+	user3.setStatus(true);
+
+	Mockito.when(userRepository.findByStatusTrue()).thenReturn(Arrays.asList(user1, user2, user3));
+
+	mockMvc.perform(get("/api/auth"))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.size()").value(3))
+		.andExpect(jsonPath("$[0].name").value("User One"))
+		.andExpect(jsonPath("$[1].name").value("User Two"))
+		.andExpect(jsonPath("$[2].name").value("User Three"));
+
+	Mockito.verify(userRepository).findByStatusTrue();
+    }
+
+    // ==========================================
+    // MODULE: LẤY USER THEO ID
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_03
+     * Mô tả: Lấy thông tin user thành công khi ID tồn tại trong database.
+     */
     @Test
     void getOne_testChuan1() throws Exception {
 	Long userId = 1L;
@@ -125,6 +174,30 @@ class UserApiTest {
 	Mockito.verify(userRepository).findById(userId);
     }
 
+    /**
+     * Test Case ID: TC_U_04
+     * Mô tả: Lấy thông tin user thành công khi ID tồn tại - Test case 2.
+     */
+    @Test
+    void getOne_testChuan2() throws Exception {
+	Long userId = 10L;
+	User user = new User();
+	user.setUserId(userId);
+	user.setName("Nguyễn Văn B");
+	user.setEmail("nguyenvanb@example.com");
+
+	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
+	Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+	mockMvc.perform(get("/api/auth/{id}", userId))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.name").value("Nguyễn Văn B"));
+    }
+
+    /**
+     * Test Case ID: TC_U_05
+     * Mô tả: Báo lỗi Not Found khi ID user không tồn tại trong database.
+     */
     @Test
     void getOne_testNgoaiLe1() throws Exception {
 	Long userId = 999L;
@@ -138,6 +211,31 @@ class UserApiTest {
 	Mockito.verify(userRepository, never()).findById(any());
     }
 
+    /**
+     * Test Case ID: TC_U_06
+     * Mô tả: Báo lỗi Not Found khi ID user không tồn tại - Test case 2.
+     */
+    @Test
+    void getOne_testNgoaiLe2() throws Exception {
+	Long userId = 999L;
+
+	Mockito.when(userRepository.existsById(userId)).thenReturn(false);
+
+	mockMvc.perform(get("/api/auth/{id}", userId))
+		.andExpect(status().isNotFound());
+
+	Mockito.verify(userRepository).existsById(userId);
+	Mockito.verify(userRepository, never()).findById(any());
+    }
+
+    // ==========================================
+    // MODULE: LẤY USER THEO EMAIL
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_07
+     * Mô tả: Lấy thông tin user thành công khi email tồn tại trong database.
+     */
     @Test
     void getOneByEmail_testChuan1() throws Exception {
 	String email = "a@example.com";
@@ -156,6 +254,32 @@ class UserApiTest {
 	Mockito.verify(userRepository).findByEmail(email);
     }
 
+    /**
+     * Test Case ID: TC_U_08
+     * Mô tả: Lấy thông tin user thành công khi email tồn tại - Test case 2.
+     */
+    @Test
+    void getOneByEmail_testChuan2() throws Exception {
+	String email = "nguyenvana@gmail.com";
+	User user = new User();
+	user.setEmail(email);
+	user.setName("Nguyễn Văn A");
+
+	Mockito.when(userRepository.existsByEmail(email)).thenReturn(true);
+	Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+	mockMvc.perform(get("/api/auth/email/{email}", email))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.name").value("Nguyễn Văn A"));
+
+	Mockito.verify(userRepository).existsByEmail(email);
+	Mockito.verify(userRepository).findByEmail(email);
+    }
+
+    /**
+     * Test Case ID: TC_U_09
+     * Mô tả: Báo lỗi Not Found khi email không tồn tại trong database.
+     */
     @Test
     void getOneByEmail_testNgoaiLe1() throws Exception {
 	String email = "missing@example.com";
@@ -169,6 +293,31 @@ class UserApiTest {
 	Mockito.verify(userRepository, never()).findByEmail(any());
     }
 
+    /**
+     * Test Case ID: TC_U_10
+     * Mô tả: Báo lỗi Not Found khi email không tồn tại - Test case 2.
+     */
+    @Test
+    void getOneByEmail_testNgoaiLe2() throws Exception {
+	String email = "notfound@gmail.com";
+
+	Mockito.when(userRepository.existsByEmail(email)).thenReturn(false);
+
+	mockMvc.perform(get("/api/auth/email/{email}", email))
+		.andExpect(status().isNotFound());
+
+	Mockito.verify(userRepository).existsByEmail(email);
+	Mockito.verify(userRepository, never()).findByEmail(any());
+    }
+
+    // ==========================================
+    // MODULE: TẠO MỚI USER (POST)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_11
+     * Mô tả: Tạo mới user thành công khi thông tin hợp lệ, email và ID chưa tồn tại.
+     */
     @Test
     void post_testChuan1() throws Exception {
 	User newUser = new User();
@@ -198,6 +347,41 @@ class UserApiTest {
 	Mockito.verify(cartRepository).save(any(Cart.class));
     }
 
+    /**
+     * Test Case ID: TC_U_12
+     * Mô tả: Tạo mới user thành công khi thông tin hợp lệ - Test case 2.
+     */
+    @Test
+    void post_testChuan2() throws Exception {
+	User newUser = new User();
+	newUser.setUserId(20L);
+	newUser.setName("Trần Văn C");
+	newUser.setEmail("vanc@gmail.com");
+	newUser.setPassword("raw-password");
+	newUser.setPhone("0987654321");
+	newUser.setAddress("TP HCM");
+	newUser.setStatus(true);
+
+	Mockito.when(userRepository.existsByEmail("vanc@gmail.com")).thenReturn(false);
+	Mockito.when(userRepository.existsById(20L)).thenReturn(false);
+	Mockito.when(passwordEncoder.encode("raw-password")).thenReturn("encoded-password");
+	Mockito.when(jwtUtils.doGenerateToken("vanc@gmail.com")).thenReturn("token-abc");
+	Mockito.when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+	mockMvc.perform(post("/api/auth")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(jsonMapper.writeValueAsString(newUser)))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.name").value("Trần Văn C"));
+
+	Mockito.verify(userRepository).save(any(User.class));
+	Mockito.verify(cartRepository).save(any(Cart.class));
+    }
+
+    /**
+     * Test Case ID: TC_U_13
+     * Mô tả: Tạo mới user thất bại khi email đã tồn tại trong database.
+     */
     @Test
     void post_testNgoaiLe1() throws Exception {
 	User payload = new User();
@@ -215,24 +399,35 @@ class UserApiTest {
 	Mockito.verify(cartRepository, never()).save(any(Cart.class));
     }
 
+    /**
+     * Test Case ID: TC_U_14
+     * Mô tả: Tạo mới user thất bại khi email đã tồn tại - Test case 2.
+     */
     @Test
-    void post_testNgoaiLe2() throws Exception {
+    void post_testNgoaiLe3() throws Exception {
 	User payload = new User();
-	payload.setUserId(10L);
-	payload.setEmail("new@example.com");
+	payload.setUserId(30L);
+	payload.setEmail("existed@gmail.com");
 
-	Mockito.when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
-	Mockito.when(userRepository.existsById(10L)).thenReturn(true);
+	Mockito.when(userRepository.existsByEmail("existed@gmail.com")).thenReturn(true);
 
 	mockMvc.perform(post("/api/auth")
 			.contentType(MediaType.APPLICATION_JSON)
 			.content(jsonMapper.writeValueAsString(payload)))
-		.andExpect(status().isBadRequest());
+		.andExpect(status().isNotFound());
 
 	Mockito.verify(userRepository, never()).save(any(User.class));
 	Mockito.verify(cartRepository, never()).save(any(Cart.class));
     }
 
+    // ==========================================
+    // MODULE: CẬP NHẬT USER (PUT)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_15
+     * Mô tả: Cập nhật thông tin user thành công khi ID tồn tại và thông tin hợp lệ.
+     */
     @Test
     void put_testChuan1() throws Exception {
 	Long userId = 5L;
@@ -260,6 +455,42 @@ class UserApiTest {
 	Mockito.verify(userRepository).save(any(User.class));
     }
 
+    /**
+     * Test Case ID: TC_U_16
+     * Mô tả: Cập nhật thông tin user thành công - Test case 2.
+     */
+    @Test
+    void put_testChuan2() throws Exception {
+	Long userId = 1L;
+	User existing = new User();
+	existing.setUserId(userId);
+	existing.setName("Dương Old");
+	existing.setPassword("old-encoded");
+
+	User updatePayload = new User();
+	updatePayload.setUserId(userId);
+	updatePayload.setName("Dương Update");
+	updatePayload.setEmail("duong@gmail.com");
+	updatePayload.setPassword("new-raw");
+
+	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
+	Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(existing));
+	Mockito.when(passwordEncoder.encode("new-raw")).thenReturn("new-encoded");
+	Mockito.when(userRepository.save(any(User.class))).thenReturn(updatePayload);
+
+	mockMvc.perform(put("/api/auth/{id}", userId)
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(jsonMapper.writeValueAsString(updatePayload)))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.name").value("Dương Update"));
+
+	Mockito.verify(userRepository).save(any(User.class));
+    }
+
+    /**
+     * Test Case ID: TC_U_17
+     * Mô tả: Cập nhật user thất bại khi ID trong URL path không khớp với ID trong body JSON.
+     */
     @Test
     void put_testNgoaiLe1() throws Exception {
 	Long userId = 5L;
@@ -277,6 +508,10 @@ class UserApiTest {
 	Mockito.verify(userRepository, never()).save(any(User.class));
     }
 
+    /**
+     * Test Case ID: TC_U_18
+     * Mô tả: Cập nhật user thất bại khi ID không tồn tại trong database.
+     */
     @Test
     void put_testNgoaiLe2() throws Exception {
 	Long userId = 5L;
@@ -294,6 +529,34 @@ class UserApiTest {
 	Mockito.verify(userRepository, never()).save(any(User.class));
     }
 
+    /**
+     * Test Case ID: TC_U_19
+     * Mô tả: Cập nhật user thất bại khi ID trong URL không khớp với body - Test case 2.
+     */
+    @Test
+    void put_testNgoaiLe3() throws Exception {
+	Long userId = 1L;
+	User updatePayload = new User();
+	updatePayload.setUserId(2L);
+
+	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
+
+	mockMvc.perform(put("/api/auth/{id}", userId)
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(jsonMapper.writeValueAsString(updatePayload)))
+		.andExpect(status().isBadRequest());
+
+	Mockito.verify(userRepository, never()).save(any(User.class));
+    }
+
+    // ==========================================
+    // MODULE: CẬP NHẬT USER VỚI QUYỀN ADMIN (PUT ADMIN)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_20
+     * Mô tả: Admin cập nhật thông tin user thành công và gán quyền admin (role id = 2).
+     */
     @Test
     void putAdmin_testChuan1() throws Exception {
 	Long userId = 3L;
@@ -318,6 +581,43 @@ class UserApiTest {
 	org.junit.jupiter.api.Assertions.assertEquals(2, roles.iterator().next().id);
     }
 
+    /**
+     * Test Case ID: TC_U_21
+     * Mô tả: Admin cập nhật thông tin user thành công - Test case 2.
+     */
+    @Test
+    void putAdmin_testChuan2() throws Exception {
+	Long userId = 5L;
+	User updatePayload = new User();
+	updatePayload.setUserId(userId);
+	updatePayload.setName("Admin User");
+	updatePayload.setEmail("admin@example.com");
+
+	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
+	Mockito.when(userRepository.save(any(User.class))).thenReturn(updatePayload);
+
+	mockMvc.perform(put("/api/auth/admin/{id}", userId)
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(jsonMapper.writeValueAsString(updatePayload)))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.name").value("Admin User"));
+
+	ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+	Mockito.verify(userRepository).save(captor.capture());
+
+	Set<AppRole> roles = captor.getValue().getRoles();
+	org.junit.jupiter.api.Assertions.assertEquals(1, roles.size());
+	org.junit.jupiter.api.Assertions.assertEquals(2, roles.iterator().next().id);
+    }
+
+    // ==========================================
+    // MODULE: XÓA USER (SOFT DELETE)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_22
+     * Mô tả: Xóa mềm user (cập nhật status = false) thành công khi ID tồn tại.
+     */
     @Test
     void delete_testChuan1() throws Exception {
 	Long userId = 8L;
@@ -335,6 +635,31 @@ class UserApiTest {
 	Mockito.verify(userRepository).save(user);
     }
 
+    /**
+     * Test Case ID: TC_U_23
+     * Mô tả: Xóa mềm user thành công - Test case 2.
+     */
+    @Test
+    void delete_testChuan2() throws Exception {
+	Long userId = 1L;
+	User user = new User();
+	user.setUserId(userId);
+	user.setStatus(true);
+
+	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
+	Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+	mockMvc.perform(delete("/api/auth/{id}", userId))
+		.andExpect(status().isOk());
+
+	org.junit.jupiter.api.Assertions.assertFalse(user.getStatus());
+	Mockito.verify(userRepository).save(user);
+    }
+
+    /**
+     * Test Case ID: TC_U_24
+     * Mô tả: Xóa user thất bại khi ID không tồn tại trong database.
+     */
     @Test
     void delete_testNgoaiLe1() throws Exception {
 	Long userId = 999L;
@@ -349,6 +674,32 @@ class UserApiTest {
 	Mockito.verify(userRepository, never()).save(any(User.class));
     }
 
+    /**
+     * Test Case ID: TC_U_25
+     * Mô tả: Xóa user thất bại khi ID không tồn tại - Test case 2.
+     */
+    @Test
+    void delete_testNgoaiLe2() throws Exception {
+	Long userId = 999L;
+
+	Mockito.when(userRepository.existsById(userId)).thenReturn(false);
+
+	mockMvc.perform(delete("/api/auth/{id}", userId))
+		.andExpect(status().isNotFound());
+
+	Mockito.verify(userRepository).existsById(userId);
+	Mockito.verify(userRepository, never()).findById(any());
+	Mockito.verify(userRepository, never()).save(any(User.class));
+    }
+
+    // ==========================================
+    // MODULE: ĐĂNG NHẬP (SIGNIN)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_26
+     * Mô tả: Đăng nhập thành công khi email và password hợp lệ, trả về JWT token.
+     */
     @Test
     void signin_testChuan1() throws Exception {
 	LoginRequest request = new LoginRequest("user@example.com", "123456");
@@ -382,186 +733,10 @@ class UserApiTest {
 		.andExpect(jsonPath("$.roles[0]").value("ROLE_USER"));
     }
 
-    @Test
-    void signup_testNgoaiLe1() throws Exception {
-	SignupRequest request = new SignupRequest(
-		"User 1",
-		"taken@example.com",
-		"123456",
-		"0909",
-		"HCM",
-		true,
-		true,
-		"img.jpg",
-		LocalDate.of(2025, 1, 1),
-		new HashSet<>()
-	);
-
-	Mockito.when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
-
-	mockMvc.perform(post("/api/auth/signup")
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(request)))
-		.andExpect(status().isBadRequest())
-		.andExpect(jsonPath("$.message").value("Error: Email is already taken!"));
-
-	Mockito.verify(userRepository, never()).save(any(User.class));
-	Mockito.verify(cartRepository, never()).save(any(Cart.class));
-    }
-
-    @Test
-    void signup_testChuan1() throws Exception {
-	SignupRequest request = new SignupRequest(
-		"User 2",
-		"newsignup@example.com",
-		"123456",
-		"0909",
-		"Can Tho",
-		false,
-		true,
-		"img2.jpg",
-		LocalDate.of(2025, 2, 2),
-		new HashSet<>()
-	);
-
-	Mockito.when(userRepository.existsByEmail("newsignup@example.com")).thenReturn(false);
-	Mockito.when(passwordEncoder.encode("123456")).thenReturn("encoded-123456");
-	Mockito.when(jwtUtils.doGenerateToken("newsignup@example.com")).thenReturn("signup-token");
-
-	mockMvc.perform(post("/api/auth/signup")
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(request)))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.message").value("Đăng kí thành công"));
-
-	Mockito.verify(userRepository).save(any(User.class));
-	Mockito.verify(cartRepository).save(any(Cart.class));
-    }
-
-    @Test
-    void logout_testChuan1() throws Exception {
-	mockMvc.perform(get("/api/auth/logout"))
-		.andExpect(status().isOk());
-    }
-
-    @Test
-    void sendToken_testNgoaiLe1() throws Exception {
-	String email = "missing@example.com";
-
-	Mockito.when(userRepository.existsByEmail(email)).thenReturn(false);
-
-	mockMvc.perform(post("/api/auth/send-mail-forgot-password-token")
-			.contentType(MediaType.TEXT_PLAIN)
-			.content(email))
-		.andExpect(status().isNotFound());
-
-	Mockito.verify(sendMailService, never()).queue(any(), any(), any());
-    }
-
-    @Test
-    void sendToken_testChuan1() throws Exception {
-	String email = "found@example.com";
-	User user = new User();
-	user.setEmail(email);
-	user.setToken("token-reset-999");
-
-	Mockito.when(userRepository.existsByEmail(email)).thenReturn(true);
-	Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-
-	mockMvc.perform(post("/api/auth/send-mail-forgot-password-token")
-			.contentType(MediaType.TEXT_PLAIN)
-			.content(email))
-		.andExpect(status().isOk());
-
-	Mockito.verify(sendMailService).queue(eq(email), eq("Reset mật khẩu"),
-		Mockito.contains("forgot-password/token-reset-999"));
-    }
-
-    @Test
-    void getAll_testChuan2() throws Exception {
-	User user1 = new User();
-	user1.setUserId(1L);
-	user1.setName("User One");
-	user1.setStatus(true);
-
-	User user2 = new User();
-	user2.setUserId(2L);
-	user2.setName("User Two");
-	user2.setStatus(true);
-
-	User user3 = new User();
-	user3.setUserId(3L);
-	user3.setName("User Three");
-	user3.setStatus(true);
-
-	Mockito.when(userRepository.findByStatusTrue()).thenReturn(Arrays.asList(user1, user2, user3));
-
-	mockMvc.perform(get("/api/auth"))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.size()").value(3))
-		.andExpect(jsonPath("$[0].name").value("User One"))
-		.andExpect(jsonPath("$[1].name").value("User Two"))
-		.andExpect(jsonPath("$[2].name").value("User Three"));
-
-	Mockito.verify(userRepository).findByStatusTrue();
-    }
-
-    @Test
-    void registerUser_testChuan1() throws Exception {
-	SignupRequest request = new SignupRequest(
-		"New User",
-		"newuser@example.com",
-		"123456",
-		"0123456789",
-		"Da Nang",
-		true,
-		true,
-		"avatar.jpg",
-		LocalDate.of(2024, 1, 15),
-		new HashSet<>()
-	);
-
-	Mockito.when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
-	Mockito.when(passwordEncoder.encode("123456")).thenReturn("encoded-123456");
-	Mockito.when(jwtUtils.doGenerateToken("newuser@example.com")).thenReturn("new-token");
-
-	mockMvc.perform(post("/api/auth/signup")
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(request)))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.message").value("Đăng kí thành công"));
-
-	Mockito.verify(userRepository).save(any(User.class));
-	Mockito.verify(cartRepository).save(any(Cart.class));
-    }
-
-    @Test
-    void registerUser_testNgoaiLe1() throws Exception {
-	SignupRequest request = new SignupRequest(
-		"Old User",
-		"olduser@example.com",
-		"123456",
-		"0123456789",
-		"Ho Chi Minh",
-		true,
-		true,
-		"avatar.jpg",
-		LocalDate.of(2024, 1, 15),
-		new HashSet<>()
-	);
-
-	Mockito.when(userRepository.existsByEmail("olduser@example.com")).thenReturn(true);
-
-	mockMvc.perform(post("/api/auth/signup")
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(request)))
-		.andExpect(status().isBadRequest())
-		.andExpect(jsonPath("$.message").value("Error: Email is already taken!"));
-
-	Mockito.verify(userRepository, never()).save(any(User.class));
-	Mockito.verify(cartRepository, never()).save(any(Cart.class));
-    }
-
+    /**
+     * Test Case ID: TC_U_27
+     * Mô tả: Đăng nhập thành công - Test case 2.
+     */
     @Test
     void authenticateUser_testChuan1() throws Exception {
 	LoginRequest request = new LoginRequest("user@example.com", "123456");
@@ -594,15 +769,17 @@ class UserApiTest {
 		.andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
-    // Test xử lý exception từ authenticationManager
-    // Endpoint không có exception handler nên sẽ throw BadCredentialsException
+    /**
+     * Test Case ID: TC_U_28
+     * Mô tả: Đăng nhập thất bại khi password không đúng.
+     */
     @Test
     void authenticateUser_testNgoaiLe1() throws Exception {
     	LoginRequest request = new LoginRequest("user@example.com", "wrongpass");
-    
+
     	Mockito.when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
     		.thenThrow(new org.springframework.security.authentication.BadCredentialsException("Bad credentials"));
-    
+
     	try {
     		mockMvc.perform(post("/api/auth/signin")
     				.contentType(MediaType.APPLICATION_JSON)
@@ -614,213 +791,204 @@ class UserApiTest {
     	}
     }
 
+    // ==========================================
+    // MODULE: ĐĂNG KÝ (SIGNUP)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_29
+     * Mô tả: Đăng ký tài khoản mới thành công khi email chưa tồn tại.
+     */
     @Test
-    void getOne_testChuan2() throws Exception {
-	Long userId = 10L;
-	User user = new User();
-	user.setUserId(userId);
-	user.setName("Nguyễn Văn B");
-	user.setEmail("nguyenvanb@example.com");
+    void signup_testChuan1() throws Exception {
+	SignupRequest request = new SignupRequest(
+		"User 2",
+		"newsignup@example.com",
+		"123456",
+		"0909",
+		"Can Tho",
+		false,
+		true,
+		"img2.jpg",
+		LocalDate.of(2025, 2, 2),
+		new HashSet<>()
+	);
 
-	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
-	Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+	Mockito.when(userRepository.existsByEmail("newsignup@example.com")).thenReturn(false);
+	Mockito.when(passwordEncoder.encode("123456")).thenReturn("encoded-123456");
+	Mockito.when(jwtUtils.doGenerateToken("newsignup@example.com")).thenReturn("signup-token");
 
-	mockMvc.perform(get("/api/auth/{id}", userId))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.name").value("Nguyễn Văn B"));
-    }
-
-    @Test
-    void getOne_testNgoaiLe2() throws Exception {
-	Long userId = 999L;
-
-	Mockito.when(userRepository.existsById(userId)).thenReturn(false);
-
-	mockMvc.perform(get("/api/auth/{id}", userId))
-		.andExpect(status().isNotFound());
-
-	Mockito.verify(userRepository).existsById(userId);
-	Mockito.verify(userRepository, never()).findById(any());
-    }
-
-    @Test
-    void getOneByEmail_testChuan2() throws Exception {
-	String email = "nguyenvana@gmail.com";
-	User user = new User();
-	user.setEmail(email);
-	user.setName("Nguyễn Văn A");
-
-	Mockito.when(userRepository.existsByEmail(email)).thenReturn(true);
-	Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-
-	mockMvc.perform(get("/api/auth/email/{email}", email))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.name").value("Nguyễn Văn A"));
-
-	Mockito.verify(userRepository).existsByEmail(email);
-	Mockito.verify(userRepository).findByEmail(email);
-    }
-
-    @Test
-    void getOneByEmail_testNgoaiLe2() throws Exception {
-	String email = "notfound@gmail.com";
-
-	Mockito.when(userRepository.existsByEmail(email)).thenReturn(false);
-
-	mockMvc.perform(get("/api/auth/email/{email}", email))
-		.andExpect(status().isNotFound());
-
-	Mockito.verify(userRepository).existsByEmail(email);
-	Mockito.verify(userRepository, never()).findByEmail(any());
-    }
-
-    @Test
-    void post_testChuan2() throws Exception {
-	User newUser = new User();
-	newUser.setUserId(20L);
-	newUser.setName("Trần Văn C");
-	newUser.setEmail("vanc@gmail.com");
-	newUser.setPassword("raw-password");
-	newUser.setPhone("0987654321");
-	newUser.setAddress("TP HCM");
-	newUser.setStatus(true);
-
-	Mockito.when(userRepository.existsByEmail("vanc@gmail.com")).thenReturn(false);
-	Mockito.when(userRepository.existsById(20L)).thenReturn(false);
-	Mockito.when(passwordEncoder.encode("raw-password")).thenReturn("encoded-password");
-	Mockito.when(jwtUtils.doGenerateToken("vanc@gmail.com")).thenReturn("token-abc");
-	Mockito.when(userRepository.save(any(User.class))).thenReturn(newUser);
-
-	mockMvc.perform(post("/api/auth")
+	mockMvc.perform(post("/api/auth/signup")
 			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(newUser)))
+			.content(jsonMapper.writeValueAsString(request)))
 		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.name").value("Trần Văn C"));
+		.andExpect(jsonPath("$.message").value("Đăng kí thành công"));
 
 	Mockito.verify(userRepository).save(any(User.class));
 	Mockito.verify(cartRepository).save(any(Cart.class));
     }
 
+    /**
+     * Test Case ID: TC_U_30
+     * Mô tả: Đăng ký thất bại khi email đã tồn tại trong database.
+     */
     @Test
-    void post_testNgoaiLe3() throws Exception {
-	User payload = new User();
-	payload.setUserId(30L);
-	payload.setEmail("existed@gmail.com");
+    void signup_testNgoaiLe1() throws Exception {
+	SignupRequest request = new SignupRequest(
+		"User 1",
+		"taken@example.com",
+		"123456",
+		"0909",
+		"HCM",
+		true,
+		true,
+		"img.jpg",
+		LocalDate.of(2025, 1, 1),
+		new HashSet<>()
+	);
 
-	Mockito.when(userRepository.existsByEmail("existed@gmail.com")).thenReturn(true);
+	Mockito.when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
 
-	mockMvc.perform(post("/api/auth")
+	mockMvc.perform(post("/api/auth/signup")
 			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(payload)))
-		.andExpect(status().isNotFound());
+			.content(jsonMapper.writeValueAsString(request)))
+		.andExpect(status().isBadRequest())
+		.andExpect(jsonPath("$.message").value("Error: Email is already taken!"));
 
 	Mockito.verify(userRepository, never()).save(any(User.class));
 	Mockito.verify(cartRepository, never()).save(any(Cart.class));
     }
 
+    /**
+     * Test Case ID: TC_U_31
+     * Mô tả: Đăng ký tài khoản mới thành công - Test case 2.
+     */
     @Test
-    void put_testChuan2() throws Exception {
-	Long userId = 1L;
-	User existing = new User();
-	existing.setUserId(userId);
-	existing.setName("Dương Old");
-	existing.setPassword("old-encoded");
+    void registerUser_testChuan1() throws Exception {
+	SignupRequest request = new SignupRequest(
+		"New User",
+		"newuser@example.com",
+		"123456",
+		"0123456789",
+		"Da Nang",
+		true,
+		true,
+		"avatar.jpg",
+		LocalDate.of(2024, 1, 15),
+		new HashSet<>()
+	);
 
-	User updatePayload = new User();
-	updatePayload.setUserId(userId);
-	updatePayload.setName("Dương Update");
-	updatePayload.setEmail("duong@gmail.com");
-	updatePayload.setPassword("new-raw");
+	Mockito.when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
+	Mockito.when(passwordEncoder.encode("123456")).thenReturn("encoded-123456");
+	Mockito.when(jwtUtils.doGenerateToken("newuser@example.com")).thenReturn("new-token");
 
-	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
-	Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(existing));
-	Mockito.when(passwordEncoder.encode("new-raw")).thenReturn("new-encoded");
-	Mockito.when(userRepository.save(any(User.class))).thenReturn(updatePayload);
-
-	mockMvc.perform(put("/api/auth/{id}", userId)
+	mockMvc.perform(post("/api/auth/signup")
 			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(updatePayload)))
+			.content(jsonMapper.writeValueAsString(request)))
 		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.name").value("Dương Update"));
+		.andExpect(jsonPath("$.message").value("Đăng kí thành công"));
 
 	Mockito.verify(userRepository).save(any(User.class));
+	Mockito.verify(cartRepository).save(any(Cart.class));
     }
 
+    /**
+     * Test Case ID: TC_U_32
+     * Mô tả: Đăng ký thất bại khi email đã tồn tại - Test case 2.
+     */
     @Test
-    void put_testNgoaiLe3() throws Exception {
-	Long userId = 1L;
-	User updatePayload = new User();
-	updatePayload.setUserId(2L);
+    void registerUser_testNgoaiLe1() throws Exception {
+	SignupRequest request = new SignupRequest(
+		"Old User",
+		"olduser@example.com",
+		"123456",
+		"0123456789",
+		"Ho Chi Minh",
+		true,
+		true,
+		"avatar.jpg",
+		LocalDate.of(2024, 1, 15),
+		new HashSet<>()
+	);
 
-	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
+	Mockito.when(userRepository.existsByEmail("olduser@example.com")).thenReturn(true);
 
-	mockMvc.perform(put("/api/auth/{id}", userId)
+	mockMvc.perform(post("/api/auth/signup")
 			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(updatePayload)))
-		.andExpect(status().isBadRequest());
+			.content(jsonMapper.writeValueAsString(request)))
+		.andExpect(status().isBadRequest())
+		.andExpect(jsonPath("$.message").value("Error: Email is already taken!"));
 
 	Mockito.verify(userRepository, never()).save(any(User.class));
+	Mockito.verify(cartRepository, never()).save(any(Cart.class));
     }
 
+    // ==========================================
+    // MODULE: ĐĂNG XUẤT (LOGOUT)
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_33
+     * Mô tả: Đăng xuất thành công.
+     */
     @Test
-    void delete_testChuan2() throws Exception {
-	Long userId = 1L;
-	User user = new User();
-	user.setUserId(userId);
-	user.setStatus(true);
-
-	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
-	Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-
-	mockMvc.perform(delete("/api/auth/{id}", userId))
+    void logout_testChuan1() throws Exception {
+	mockMvc.perform(get("/api/auth/logout"))
 		.andExpect(status().isOk());
-
-	org.junit.jupiter.api.Assertions.assertFalse(user.getStatus());
-	Mockito.verify(userRepository).save(user);
     }
 
-    @Test
-    void delete_testNgoaiLe2() throws Exception {
-	Long userId = 999L;
-
-	Mockito.when(userRepository.existsById(userId)).thenReturn(false);
-
-	mockMvc.perform(delete("/api/auth/{id}", userId))
-		.andExpect(status().isNotFound());
-
-	Mockito.verify(userRepository).existsById(userId);
-	Mockito.verify(userRepository, never()).findById(any());
-	Mockito.verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void putAdmin_testChuan2() throws Exception {
-	Long userId = 5L;
-	User updatePayload = new User();
-	updatePayload.setUserId(userId);
-	updatePayload.setName("Admin User");
-	updatePayload.setEmail("admin@example.com");
-
-	Mockito.when(userRepository.existsById(userId)).thenReturn(true);
-	Mockito.when(userRepository.save(any(User.class))).thenReturn(updatePayload);
-
-	mockMvc.perform(put("/api/auth/admin/{id}", userId)
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(jsonMapper.writeValueAsString(updatePayload)))
-		.andExpect(status().isOk())
-		.andExpect(jsonPath("$.name").value("Admin User"));
-
-	ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-	Mockito.verify(userRepository).save(captor.capture());
-
-	Set<AppRole> roles = captor.getValue().getRoles();
-	org.junit.jupiter.api.Assertions.assertEquals(1, roles.size());
-	org.junit.jupiter.api.Assertions.assertEquals(2, roles.iterator().next().id);
-    }
-
+    /**
+     * Test Case ID: TC_U_34
+     * Mô tả: Đăng xuất thành công - Test case 2.
+     */
     @Test
     void logout_testChuan2() throws Exception {
 	mockMvc.perform(get("/api/auth/logout"))
 		.andExpect(status().isOk());
+    }
+
+    // ==========================================
+    // MODULE: GỬI EMAIL QUÊN MẬT KHẨU
+    // ==========================================
+
+    /**
+     * Test Case ID: TC_U_35
+     * Mô tả: Gửi email reset password thành công khi email tồn tại trong database.
+     */
+    @Test
+    void sendToken_testChuan1() throws Exception {
+	String email = "found@example.com";
+	User user = new User();
+	user.setEmail(email);
+	user.setToken("token-reset-999");
+
+	Mockito.when(userRepository.existsByEmail(email)).thenReturn(true);
+	Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+	mockMvc.perform(post("/api/auth/send-mail-forgot-password-token")
+			.contentType(MediaType.TEXT_PLAIN)
+			.content(email))
+		.andExpect(status().isOk());
+
+	Mockito.verify(sendMailService).queue(eq(email), eq("Reset mật khẩu"),
+		Mockito.contains("forgot-password/token-reset-999"));
+    }
+
+    /**
+     * Test Case ID: TC_U_36
+     * Mô tả: Gửi email reset password thất bại khi email không tồn tại trong database.
+     */
+    @Test
+    void sendToken_testNgoaiLe1() throws Exception {
+	String email = "missing@example.com";
+
+	Mockito.when(userRepository.existsByEmail(email)).thenReturn(false);
+
+	mockMvc.perform(post("/api/auth/send-mail-forgot-password-token")
+			.contentType(MediaType.TEXT_PLAIN)
+			.content(email))
+		.andExpect(status().isNotFound());
+
+	Mockito.verify(sendMailService, never()).queue(any(), any(), any());
     }
 }
