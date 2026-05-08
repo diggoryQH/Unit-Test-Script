@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.nongsan.selenium.test.CategoryTest
 -------------------------------------------------------------------------------
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.25 s -- in com.nongsan.selenium.test.CategoryTest
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 24.69 s -- in com.nongsan.selenium.test.CategoryTest
