@@ -36,7 +36,7 @@ import com.nongsan.entity.User;
 		"spring.jpa.hibernate.ddl-auto=create-drop",
 		"spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
 })
-@AutoConfigureTestDatabase(replace = Replace.ANY)
+@AutoConfigureTestDatabase(replace = Replace.NONE)
 class StatisticalRepositoryTest {
 
 	@Autowired
