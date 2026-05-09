@@ -15,6 +15,7 @@
 	<description>NongsanShop</description>
 	<properties>
 		<java.version>17</java.version>
+		<selenium.version>4.18.1</selenium.version>
 	</properties>
 	<dependencies>
 
@@ -108,81 +109,38 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			</dependency>
-				<!-- Selenium WebDriver -->
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-java</artifactId>
-			<version>4.15.0</version>
-		</dependency>
+<scope>test</scope>
+</dependency>
 
-		<!-- Explicit selenium-api version to avoid conflicts -->
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-api</artifactId>
-			<version>4.15.0</version>
-		</dependency>
+<!-- Selenium -->
+<dependency>
+    <groupId>org.seleniumhq.selenium</groupId>
+    <artifactId>selenium-java</artifactId>
+    <version>4.18.1</version>
+    <scope>test</scope>
+</dependency>
 
-		<!-- Explicit selenium-support version -->
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-support</artifactId>
-			<version>4.15.0</version>
-		</dependency>
+<dependency>
+    <groupId>io.github.bonigarcia</groupId>
+    <artifactId>webdrivermanager</artifactId>
+    <version>5.7.0</version>
+    <scope>test</scope>
+</dependency>
 
-		<!-- Override all old Selenium 3.x transitive dependencies with 4.15.0 -->
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-chrome-driver</artifactId>
-			<version>4.15.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-firefox-driver</artifactId>
-			<version>4.15.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-edge-driver</artifactId>
-			<version>4.15.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-ie-driver</artifactId>
-			<version>4.15.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-safari-driver</artifactId>
-			<version>4.15.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-remote-driver</artifactId>
-			<version>4.15.0</version>
-		</dependency>
+<dependency>
+    <groupId>org.apache.httpcomponents.client5</groupId>
+    <artifactId>httpclient5</artifactId>
+    <version>5.2.1</version>
+    <scope>test</scope>
+</dependency>
 
-		<!-- Apache HttpClient 5 for Selenium -->
-		<dependency>
-			<groupId>org.apache.httpcomponents.client5</groupId>
-			<artifactId>httpclient5</artifactId>
-			<version>5.2.1</version>
-		</dependency>
-
-		<!-- WebDriverManager - tự động download chromedriver -->
-		<dependency>
-			<groupId>io.github.bonigarcia</groupId>
-			<artifactId>webdrivermanager</artifactId>
-			<version>5.6.2</version>
-		</dependency>
-
-		<!-- Extent Reports cho test report -->
-		<dependency>
-			<groupId>com.aventstack</groupId>
-			<artifactId>extentreports</artifactId>
-			<version>5.1.1</version>
-		</dependency>
-
+<!-- Report -->
+<dependency>
+    <groupId>com.aventstack</groupId>
+    <artifactId>extentreports</artifactId>
+    <version>5.1.1</version>
+    <scope>test</scope>
+</dependency>
 	</dependencies>
 
 	<build>

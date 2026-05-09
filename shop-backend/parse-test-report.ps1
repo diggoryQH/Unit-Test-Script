@@ -3,8 +3,8 @@
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.UserApiTest.xml"
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.StatisticalApiTest.xml"
 # $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.ResetPasswordControllerTest.xml"
-#$xmlPath = "target/surefire-reports/TEST-com.nongsan.service.SendMailServiceTest.xml"
-$xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.RateApiTest.xml"
+$xmlPath = "target/surefire-reports/TEST-com.nongsan.service.SendMailServiceTest.xml"
+# $xmlPath = "target/surefire-reports/TEST-com.nongsan.controller.CheckoutApiTest.xml"
 
 
 

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Template Snapshot - Checkout Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .snapshot-info { background: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #007bff; }
+        .checkout-container { border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        /* Phỏng phỏng giao diện mẫu */
+        .ps-checkout { display: flex; gap: 20px; }
+        .billing-info { flex: 2; }
+        .order-summary { flex: 1; background: #fafafa; padding: 15px; border: 1px solid #eee; }
+        .ps-btn { background: #fcb800; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; width: 100%; }
+        h1, h4 { color: #000; }
+    </style>
+</head>
+<body>
+    <div class="snapshot-info">
+        <h2>📷 UI Snapshot: Trang Thanh Toán (Checkout)</h2>
+        <p><strong>Ngày chụp:</strong> 09/05/2026</p>
+        <p><strong>Mục đích:</strong> Dùng làm cơ sở (Baseline) để đối chiếu cấu trúc HTML và giao diện khi viết Selenium Test.</p>
+    </div>
+
+    <!-- Cấu trúc HTML chính trích xuất từ trình duyệt -->
+    <div class="checkout-container">
+        <div class="ps-checkout">
+            <div class="billing-info">
+                <h4>Thông tin nhận hàng</h4>
+                <div class="form-group">
+                    <label>Họ và tên: </label><strong>hung hung</strong>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại: </label><strong>0345678912</strong>
+                </div>
+                <div class="form-group">
+                    <label>Tỉnh/Thành phố*</label>
+                    <select disabled><option>Chọn tỉnh thành</option></select>
+                </div>
+                <p>... (Các trường District, Ward tương tự)</p>
+            </div>
+            
+            <div class="order-summary">
+                <h3>Đơn hàng của bạn</h3>
+                <div class="ps-block--checkout-order">
+                    <p>Sản phẩm: <strong>Bao tử cá basa × 1</strong></p>
+                    <p>Tạm tính: <span>₫200,000</span></p>
+                    <p>Phí ship: <span>+ ₫0</span></p>
+                    <hr>
+                    <h4>Tổng cộng: <span style="color:red">₫200,000</span></h4>
+                </div>
+                <button class="ps-btn">THANH TOÁN COD</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
