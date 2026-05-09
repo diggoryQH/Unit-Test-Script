@@ -66,6 +66,11 @@ class RateApiTest {
     @MockBean
     private AuthTokenFilter authTokenFilter;
 
+    /**
+     * Test Case ID: TC_RATE_01
+     * Mô tả: Lấy danh sách tất cả các đánh giá thành công, sắp xếp theo ID giảm
+     * dần.
+     */
     @Test
     void findAll_testChuan1() throws Exception {
         Rate rate = new Rate();
@@ -73,16 +78,26 @@ class RateApiTest {
         rate.setComment("Great product");
         rate.setRating(5.0);
 
-        Mockito.when(rateRepository.findAllByOrderByIdDesc()).thenReturn(Collections.singletonList(rate));
+        Rate rate2 = new Rate();
+        rate2.setId(2L);
+        rate2.setComment("Good product");
+        rate2.setRating(4.0);
+
+        Mockito.when(rateRepository.findAllByOrderByIdDesc()).thenReturn(Arrays.asList(rate2, rate));
 
         mockMvc.perform(get("/api/rates"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1))
-                .andExpect(jsonPath("$[0].comment").value("Great product"));
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$[0].comment").value("Good product"))
+                .andExpect(jsonPath("$[1].comment").value("Great product"));
 
         Mockito.verify(rateRepository).findAllByOrderByIdDesc();
     }
 
+    /**
+     * Test Case ID: TC_RATE_02
+     * Mô tả: Lấy đánh giá thành công khi ID chi tiết đơn hàng tồn tại.
+     */
     @Test
     void findById_testChuan1() throws Exception {
         Long orderDetailId = 10L;
@@ -106,6 +121,11 @@ class RateApiTest {
         Mockito.verify(rateRepository).findByOrderDetail(orderDetail);
     }
 
+    /**
+     * Test Case ID: TC_RATE_03
+     * Mô tả: Báo lỗi Not Found khi cố lấy đánh giá của chi tiết đơn hàng không tồn
+     * tại.
+     */
     @Test
     void findById_testNgoaiLe1() throws Exception {
         Long orderDetailId = 99L;
@@ -119,6 +139,11 @@ class RateApiTest {
         Mockito.verify(rateRepository, Mockito.never()).findByOrderDetail(any());
     }
 
+    /**
+     * Test Case ID: TC_RATE_04
+     * Mô tả: Lấy danh sách đánh giá của sản phẩm thành công khi ID sản phẩm tồn
+     * tại.
+     */
     @Test
     void findByProduct_testChuan1() throws Exception {
         Long productId = 5L;
@@ -129,19 +154,29 @@ class RateApiTest {
         rate.setId(1L);
         rate.setRating(5.0);
 
+        Rate rate2 = new Rate();
+        rate2.setId(2L);
+        rate2.setRating(4.0);
+
         Mockito.when(productRepository.existsById(productId)).thenReturn(true);
         Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        Mockito.when(rateRepository.findByProductOrderByIdDesc(product)).thenReturn(Collections.singletonList(rate));
+        Mockito.when(rateRepository.findByProductOrderByIdDesc(product)).thenReturn(Arrays.asList(rate2, rate));
 
         mockMvc.perform(get("/api/rates/product/{id}", productId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1))
-                .andExpect(jsonPath("$[0].rating").value(5));
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$[0].rating").value(4.0))
+                .andExpect(jsonPath("$[1].rating").value(5.0));
 
         Mockito.verify(productRepository).existsById(productId);
         Mockito.verify(rateRepository).findByProductOrderByIdDesc(product);
     }
 
+    /**
+     * Test Case ID: TC_RATE_05
+     * Mô tả: Báo lỗi Not Found khi cố lấy danh sách đánh giá của sản phẩm không tồn
+     * tại.
+     */
     @Test
     void findByProduct_testNgoaiLe1() throws Exception {
         Long productId = 99L;
@@ -155,6 +190,11 @@ class RateApiTest {
         Mockito.verify(rateRepository, Mockito.never()).findByProductOrderByIdDesc(any());
     }
 
+    /**
+     * Test Case ID: TC_RATE_06
+     * Mô tả: Thêm mới đánh giá thành công khi thông tin người dùng, sản phẩm và chi
+     * tiết đơn hàng đều hợp lệ.
+     */
     @Test
     void post_testChuan1() throws Exception {
         User user = new User();
@@ -180,14 +220,19 @@ class RateApiTest {
         Mockito.when(rateRepository.save(any(Rate.class))).thenReturn(rate);
 
         mockMvc.perform(post("/api/rates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(rate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.comment").value("Awesome!"));
 
         Mockito.verify(rateRepository).save(any(Rate.class));
     }
 
+    /**
+     * Test Case ID: TC_RATE_07
+     * Mô tả: Thêm mới đánh giá thất bại (Not Found) khi ID người dùng không tồn
+     * tại.
+     */
     @Test
     void post_testNgoaiLe1_UserNotFound() throws Exception {
         User user = new User();
@@ -198,13 +243,17 @@ class RateApiTest {
         Mockito.when(userRepository.existsById(99L)).thenReturn(false);
 
         mockMvc.perform(post("/api/rates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(rate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isNotFound());
 
         Mockito.verify(rateRepository, Mockito.never()).save(any(Rate.class));
     }
 
+    /**
+     * Test Case ID: TC_RATE_08
+     * Mô tả: Thêm mới đánh giá thất bại (Not Found) khi ID sản phẩm không tồn tại.
+     */
     @Test
     void post_testNgoaiLe2_ProductNotFound() throws Exception {
         User user = new User();
@@ -219,13 +268,18 @@ class RateApiTest {
         Mockito.when(productRepository.existsById(99L)).thenReturn(false);
 
         mockMvc.perform(post("/api/rates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(rate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isNotFound());
 
         Mockito.verify(rateRepository, Mockito.never()).save(any(Rate.class));
     }
 
+    /**
+     * Test Case ID: TC_RATE_09
+     * Mô tả: Thêm mới đánh giá thất bại (Not Found) khi ID chi tiết đơn hàng không
+     * tồn tại.
+     */
     @Test
     void post_testNgoaiLe3_OrderDetailNotFound() throws Exception {
         User user = new User();
@@ -245,13 +299,18 @@ class RateApiTest {
         Mockito.when(orderDetailRepository.existsById(99L)).thenReturn(false);
 
         mockMvc.perform(post("/api/rates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(rate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isNotFound());
 
         Mockito.verify(rateRepository, Mockito.never()).save(any(Rate.class));
     }
 
+    /**
+     * Test Case ID: TC_RATE_10
+     * Mô tả: Cập nhật đánh giá thành công khi thông tin hợp lệ, ID khớp và đã có
+     * trong database.
+     */
     @Test
     void put_testChuan1() throws Exception {
         Rate rate = new Rate();
@@ -262,14 +321,19 @@ class RateApiTest {
         Mockito.when(rateRepository.save(any(Rate.class))).thenReturn(rate);
 
         mockMvc.perform(put("/api/rates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(rate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rating").value(4));
 
         Mockito.verify(rateRepository).save(any(Rate.class));
     }
 
+    /**
+     * Test Case ID: TC_RATE_11
+     * Mô tả: Cập nhật đánh giá thất bại (Not Found) khi ID đánh giá không tồn tại
+     * trong database.
+     */
     @Test
     void put_testNgoaiLe1() throws Exception {
         Rate rate = new Rate();
@@ -278,13 +342,17 @@ class RateApiTest {
         Mockito.when(rateRepository.existsById(99L)).thenReturn(false);
 
         mockMvc.perform(put("/api/rates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(rate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isNotFound());
 
         Mockito.verify(rateRepository, Mockito.never()).save(any(Rate.class));
     }
 
+    /**
+     * Test Case ID: TC_RATE_12
+     * Mô tả: Xóa đánh giá thành công khi ID đánh giá tồn tại.
+     */
     @Test
     void delete_testChuan1() throws Exception {
         Long rateId = 1L;
@@ -297,6 +365,10 @@ class RateApiTest {
         Mockito.verify(rateRepository).deleteById(rateId);
     }
 
+    /**
+     * Test Case ID: TC_RATE_13
+     * Mô tả: Xóa đánh giá thất bại (Not Found) khi ID đánh giá không tồn tại.
+     */
     @Test
     void delete_testNgoaiLe1() throws Exception {
         Long rateId = 99L;

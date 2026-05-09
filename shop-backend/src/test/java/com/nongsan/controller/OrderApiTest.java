@@ -32,441 +32,431 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * REQ-12: Xử lý đơn hàng
  * File test cho: OrderApi.java (phần xử lý đơn hàng)
- * Các hàm: findAll, getById, getByUser, updateStatus, cancel, deliver, success, updateProduct
+ * Các hàm: findAll, getById, getByUser, updateStatus, cancel, deliver, success,
+ * updateProduct
  */
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(OrderApi.class)
 @AutoConfigureMockMvc(addFilters = false)
 class OrderApiTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean private OrderRepository orderRepository;
-    @MockBean private OrderDetailRepository orderDetailRepository;
-    @MockBean private UserRepository userRepository;
-    @MockBean private CartRepository cartRepository;
-    @MockBean private CartDetailRepository cartDetailRepository;
-    @MockBean private ProductRepository productRepository;
-    @MockBean private SendMailUtil sendMailUtil;
-
-    @MockBean private UserDetailsServiceImpl userDetailsService;
-    @MockBean private AuthEntryPointJwt unauthorizedHandler;
-    @MockBean private AuthTokenFilter authTokenFilter;
-
-    @Autowired
-    private ObjectMapper jsonMapper;
-
-    // =========================================
-    // findAll() — GET /api/orders
-    // Nhánh: 1 (không có if/else)
-    // =========================================
-
-    /**
-     * TC_ORDER_01 | findAll | Nhánh: happy path
-     * Lấy tất cả đơn hàng thành công, trả về danh sách sắp xếp mới nhất.
-     */
-    @Test
-    void findAll_testChuan1() throws Exception {
-        Order o1 = new Order(1L, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
-        Order o2 = new Order(2L, new Date(), 200000.0, "HCM", "0987", 20000.0, 2.0, 2, null);
-
-        Mockito.when(orderRepository.findAllByOrderByOrdersIdDesc()).thenReturn(Arrays.asList(o2, o1));
-
-        mockMvc.perform(get("/api/orders"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(2))
-                .andExpect(jsonPath("$[0].ordersId").value(2));
-
-        Mockito.verify(orderRepository).findAllByOrderByOrdersIdDesc();
-    }
-
-    // =========================================
-    // getById() — GET /api/orders/{id}
-    // Nhánh: 2 (existsById true/false)
-    // =========================================
-
-    /**
-     * TC_ORDER_02 | getById | Nhánh: id tồn tại
-     * Lấy đơn hàng theo ID thành công.
-     */
-    @Test
-    void getById_testChuan1() throws Exception {
-        Long orderId = 1L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-
-        mockMvc.perform(get("/api/orders/{id}", orderId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.ordersId").value(1));
-
-        Mockito.verify(orderRepository).existsById(orderId);
-        Mockito.verify(orderRepository).findById(orderId);
-    }
-
-    /**
-     * TC_ORDER_03 | getById | Nhánh: id không tồn tại → 404
-     */
-    @Test
-    void getById_testNgoaiLe1() throws Exception {
-        Long invalidId = 999L;
-        Mockito.when(orderRepository.existsById(invalidId)).thenReturn(false);
-
-        mockMvc.perform(get("/api/orders/{id}", invalidId))
-                .andExpect(status().isNotFound());
-
-        Mockito.verify(orderRepository).existsById(invalidId);
-        Mockito.verify(orderRepository, Mockito.never()).findById(any());
-    }
-
-    // =========================================
-    // getByUser() — GET /api/orders/user/{email}
-    // Nhánh: 2 (existsByEmail true/false)
-    // =========================================
-
-    /**
-     * TC_ORDER_04 | getByUser | Nhánh: email tồn tại
-     * Lấy danh sách đơn hàng của user theo email thành công.
-     */
-    @Test
-    void getByUser_testChuan1() throws Exception {
-        String email = "user@gmail.com";
-        User mockUser = new User();
-        mockUser.setEmail(email);
-
-        Order o1 = new Order(1L, new Date(), 50000.0, "HN", "0912", 10000.0, 0.5, 0, mockUser);
-        Mockito.when(userRepository.existsByEmail(email)).thenReturn(true);
-        Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
-        Mockito.when(orderRepository.findByUserOrderByOrdersIdDesc(mockUser)).thenReturn(Arrays.asList(o1));
-
-        mockMvc.perform(get("/api/orders/user/{email}", email))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1));
-
-        Mockito.verify(userRepository).existsByEmail(email);
-        Mockito.verify(orderRepository).findByUserOrderByOrdersIdDesc(mockUser);
-    }
-
-    /**
-     * TC_ORDER_05 | getByUser | Nhánh: email không tồn tại → 404
-     */
-    @Test
-    void getByUser_testNgoaiLe1() throws Exception {
-        String invalidEmail = "ghost@gmail.com";
-        Mockito.when(userRepository.existsByEmail(invalidEmail)).thenReturn(false);
-
-        mockMvc.perform(get("/api/orders/user/{email}", invalidEmail))
-                .andExpect(status().isNotFound());
-
-        Mockito.verify(userRepository).existsByEmail(invalidEmail);
-        Mockito.verify(orderRepository, Mockito.never()).findByUserOrderByOrdersIdDesc(any());
-    }
-
-    // =========================================
-    // updateStatus() — GET /api/orders/updateStatus/{id}/{status}
-    // Nhánh: 5
-    //   - id không tồn tại → 404
-    //   - status=1 → sendMailOrderDeliver
-    //   - status=2 → sendMailOrderSuccess
-    //   - status=3 → sendMailOrderCancel
-    //   - status=0 (khác) → không gửi mail
-    // =========================================
-
-    /**
-     * TC_ORDER_06 | updateStatus | Nhánh: id không tồn tại → 404
-     */
-    @Test
-    void updateStatus_testNgoaiLe1_idKhongTonTai() throws Exception {
-        Mockito.when(orderRepository.existsById(999L)).thenReturn(false);
-
-        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", 999L, 1))
-                .andExpect(status().isNotFound());
-
-        Mockito.verify(orderRepository, Mockito.never()).save(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
-    }
-
-    /**
-     * TC_ORDER_07 | updateStatus | Nhánh: status=1 → gửi mail "đang giao"
-     */
-    @Test
-    void updateStatus_testChuan1_status1_dangGiao() throws Exception {
-        Long orderId = 1L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 1))
-                .andExpect(status().isOk());
-
-        Mockito.verify(sendMailUtil).sendMailOrderDeliver(mockOrder);
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
-    }
-
-    /**
-     * TC_ORDER_08 | updateStatus | Nhánh: status=2 → gửi mail "giao thành công"
-     */
-    @Test
-    void updateStatus_testChuan2_status2_thanhCong() throws Exception {
-        Long orderId = 2L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 1, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 2))
-                .andExpect(status().isOk());
-
-        Mockito.verify(sendMailUtil).sendMailOrderSuccess(mockOrder);
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
-    }
-
-    /**
-     * TC_ORDER_08b | updateStatus | Phát hiện BUG: status=2 (Thành công) KHÔNG trừ kho
-     * ⚠️ BUG LOGIC: Khi gọi API updateStatus với status=2, hệ thống chỉ đổi trạng thái 
-     * và gửi mail chứ không hề gọi hàm updateProduct() để trừ kho như endpoint /success.
-     * Test này sẽ PASS (xác nhận lỗi có thật) khi verify(productRepository.save) là never().
-     */
-    @Test
-    void updateStatus_testChuan2b_status2_loiKhongTruKho() throws Exception {
-        Long orderId = 2L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 1, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 2))
-                .andExpect(status().isOk());
-
-        // BUG: productRepository KHÔNG BAO GIỜ được gọi để update số lượng
-        Mockito.verify(productRepository, Mockito.never()).save(any(Product.class));
-    }
-
-    /**
-     * TC_ORDER_09 | updateStatus | Nhánh: status=3 → gửi mail "hủy đơn"
-     */
-    @Test
-    void updateStatus_testChuan3_status3_huyDon() throws Exception {
-        Long orderId = 3L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 3))
-                .andExpect(status().isOk());
-
-        Mockito.verify(sendMailUtil).sendMailOrderCancel(mockOrder);
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
-    }
-
-    /**
-     * TC_ORDER_10 | updateStatus | Nhánh: status=0 (khác) → không gửi bất kỳ mail nào
-     */
-    @Test
-    void updateStatus_testChuan4_statusKhac_khongGuiMail() throws Exception {
-        Long orderId = 4L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 0))
-                .andExpect(status().isOk());
-
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
-    }
-
-    /**
-     * TC_ORDER_16 | updateStatus | Nhánh: status=6 → gửi mail hủy (trả hàng đã duyệt)
-     * ⚠️ Nhánh bị bỏ sót: source code có "if (status == 3 || status == 6)" nhưng chỉ có TC_ORDER_09 test status=3.
-     * status=6 xảy ra khi admin chấp nhận yêu cầu trả hàng có hoàn tiền.
-     */
-    @Test
-    void updateStatus_testChuan5_status6_traHangHoanTien() throws Exception {
-        Long orderId = 5L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 4, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 6))
-                .andExpect(status().isOk());
-
-        // status=6 phải gửi mail hủy (cùng nhánh với status=3)
-        Mockito.verify(sendMailUtil).sendMailOrderCancel(mockOrder);
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
-    }
-
-    // =========================================
-    // cancel() — GET /api/orders/cancel/{orderId}
-    // Nhánh: 2 (existsById true/false)
-    // =========================================
-
-    /**
-     * TC_ORDER_11 | cancel | Nhánh: id tồn tại → status=3, gửi mail hủy
-     */
-    @Test
-    void cancel_testChuan1() throws Exception {
-        Long orderId = 1L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/cancel/{orderId}", orderId))
-                .andExpect(status().isOk());
-
-        Mockito.verify(orderRepository).save(mockOrder);
-        Mockito.verify(sendMailUtil).sendMailOrderCancel(mockOrder);
-    }
-
-    /**
-     * TC_ORDER_12 | cancel | Nhánh: id không tồn tại → 404, không gửi mail
-     */
-    @Test
-    void cancel_testNgoaiLe1() throws Exception {
-        Mockito.when(orderRepository.existsById(999L)).thenReturn(false);
-
-        mockMvc.perform(get("/api/orders/cancel/{orderId}", 999L))
-                .andExpect(status().isNotFound());
-
-        Mockito.verify(orderRepository, Mockito.never()).save(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
-    }
-
-    // =========================================
-    // deliver() — GET /api/orders/deliver/{orderId}
-    // Nhánh: 2 (existsById true/false)
-    // =========================================
-
-    /**
-     * TC_ORDER_13 | deliver | Nhánh: id tồn tại → status=1, gửi mail giao hàng
-     */
-    @Test
-    void deliver_testChuan1() throws Exception {
-        Long orderId = 1L;
-        Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
-
-        Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-
-        mockMvc.perform(get("/api/orders/deliver/{orderId}", orderId))
-                .andExpect(status().isOk());
-
-        Mockito.verify(orderRepository).save(mockOrder);
-        Mockito.verify(sendMailUtil).sendMailOrderDeliver(mockOrder);
-    }
-
-    /**
-     * TC_ORDER_14 | deliver | Nhánh: id không tồn tại → 404, không gửi mail
-     */
-    @Test
-    void deliver_testNgoaiLe1() throws Exception {
-        Mockito.when(orderRepository.existsById(999L)).thenReturn(false);
-
-        mockMvc.perform(get("/api/orders/deliver/{orderId}", 999L))
-                .andExpect(status().isNotFound());
-
-        Mockito.verify(orderRepository, Mockito.never()).save(any());
-        Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
-    }
-
-    // =========================================
-    // success() — GET /api/orders/success/{orderId}
-    // Nhánh: 1 (không có existsById — BUG đã ghi nhận)
-    // =========================================
-
-    /**
-     * TC_ORDER_15 | success | Nhánh: happy path — status=2, cập nhật kho, gửi mail
-     * ⚠️ Lưu ý: hàm không kiểm tra existsById (bug), chỉ test được happy path.
-     */
-    @Test
-    void success_testChuan1() throws Exception {
-        Long orderId = 1L;
-        User mockUser = new User();
-
-        Product mockProduct = new Product();
-        mockProduct.setProductId(1L);
-        mockProduct.setQuantity(10);
-        mockProduct.setSold(5);
-
-        OrderDetail mockDetail = new OrderDetail(1L, 2, 20000.0, mockProduct, null);
-
-        Order mockOrder = new Order(orderId, new Date(), 40000.0, "HN", "0912", 15000.0, 1.0, 1, mockUser);
-
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-        Mockito.when(orderDetailRepository.findByOrder(mockOrder)).thenReturn(Arrays.asList(mockDetail));
-        Mockito.when(productRepository.findById(1L)).thenReturn(Optional.of(mockProduct));
-        Mockito.when(productRepository.save(mockProduct)).thenReturn(mockProduct);
-
-        mockMvc.perform(get("/api/orders/success/{orderId}", orderId))
-                .andExpect(status().isOk());
-
-        // Xác nhận status=2, cập nhật kho, gửi mail thành công
-        Mockito.verify(orderRepository).save(mockOrder);
-        Mockito.verify(productRepository).save(mockProduct);
-        Mockito.verify(sendMailUtil).sendMailOrderSuccess(mockOrder);
-    }
-
-    /**
-     * TC_ORDER_15b | success | Kiểm tra giá trị quantity và sold sau khi trừ kho
-     * Mục đích: Phát hiện lỗi logic trong updateProduct() — dùng ArgumentCaptor để
-     *           xác minh chính xác giá trị quantity và sold đã được tính đúng.
-     *
-     * Kịch bản: Product ban đầu quantity=10, sold=5. OrderDetail có quantity=2.
-     * Kỳ vọng: quantity = 10 - 2 = 8, sold = 5 + 2 = 7.
-     * Nếu logic bị sai (vd: trừ sai trường, không trừ), test này sẽ FAIL.
-     */
-    @Test
-    void success_testChuan2_kiemTraGiaTriTruKho() throws Exception {
-        Long orderId = 2L;
-
-        Product mockProduct = new Product();
-        mockProduct.setProductId(10L);
-        mockProduct.setQuantity(10); // Tồn kho ban đầu
-        mockProduct.setSold(5);      // Đã bán ban đầu
-
-        // Đơn hàng gồm 2 sản phẩm productId=10
-        OrderDetail mockDetail = new OrderDetail(1L, 2, 40000.0, mockProduct, null);
-
-        Order mockOrder = new Order(orderId, new Date(), 40000.0, "HCM", "0987", 20000.0, 1.0, 1, null);
-
-        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
-        Mockito.when(orderDetailRepository.findByOrder(mockOrder)).thenReturn(Arrays.asList(mockDetail));
-        Mockito.when(productRepository.findById(10L)).thenReturn(Optional.of(mockProduct));
-        Mockito.when(productRepository.save(any(Product.class))).thenReturn(mockProduct);
-
-        mockMvc.perform(get("/api/orders/success/{orderId}", orderId))
-                .andExpect(status().isOk());
-
-        // Bắt đối tượng Product được truyền vào save() để kiểm tra giá trị thực tế
-        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
-        Mockito.verify(productRepository).save(productCaptor.capture());
-
-        Product savedProduct = productCaptor.getValue();
-        assertEquals(8, savedProduct.getQuantity(),
-                "[BUG DETECT] quantity phải giảm đúng: 10 - 2 = 8, nhưng thực tế là " + savedProduct.getQuantity());
-        assertEquals(7, savedProduct.getSold(),
-                "[BUG DETECT] sold phải tăng đúng: 5 + 2 = 7, nhưng thực tế là " + savedProduct.getSold());
-    }
+        @Autowired
+        private MockMvc mockMvc;
+
+        @MockBean
+        private OrderRepository orderRepository;
+        @MockBean
+        private OrderDetailRepository orderDetailRepository;
+        @MockBean
+        private UserRepository userRepository;
+        @MockBean
+        private CartRepository cartRepository;
+        @MockBean
+        private CartDetailRepository cartDetailRepository;
+        @MockBean
+        private ProductRepository productRepository;
+        @MockBean
+        private SendMailUtil sendMailUtil;
+
+        @MockBean
+        private UserDetailsServiceImpl userDetailsService;
+        @MockBean
+        private AuthEntryPointJwt unauthorizedHandler;
+        @MockBean
+        private AuthTokenFilter authTokenFilter;
+
+        @Autowired
+        private ObjectMapper jsonMapper;
+
+        /**
+         * Test Case ID: TC_ORDER_01
+         * Mô tả: Lấy tất cả đơn hàng thành công, trả về danh sách được sắp xếp mới
+         * nhất.
+         */
+        @Test
+        void findAll_testChuan1() throws Exception {
+                Order o1 = new Order(1L, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
+                Order o2 = new Order(2L, new Date(), 200000.0, "HCM", "0987", 20000.0, 2.0, 2, null);
+
+                Mockito.when(orderRepository.findAllByOrderByOrdersIdDesc()).thenReturn(Arrays.asList(o2, o1));
+
+                mockMvc.perform(get("/api/orders"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.size()").value(2))
+                                .andExpect(jsonPath("$[0].ordersId").value(2));
+
+                Mockito.verify(orderRepository).findAllByOrderByOrdersIdDesc();
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_02
+         * Mô tả: Lấy đơn hàng theo ID thành công khi ID đơn hàng tồn tại.
+         */
+        @Test
+        void getById_testChuan1() throws Exception {
+                Long orderId = 1L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+
+                mockMvc.perform(get("/api/orders/{id}", orderId))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.ordersId").value(1));
+
+                Mockito.verify(orderRepository).existsById(orderId);
+                Mockito.verify(orderRepository).findById(orderId);
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_03
+         * Mô tả: Báo lỗi Not Found khi lấy đơn hàng với ID không tồn tại.
+         */
+        @Test
+        void getById_testNgoaiLe1() throws Exception {
+                Long invalidId = 999L;
+                Mockito.when(orderRepository.existsById(invalidId)).thenReturn(false);
+
+                mockMvc.perform(get("/api/orders/{id}", invalidId))
+                                .andExpect(status().isNotFound());
+
+                Mockito.verify(orderRepository).existsById(invalidId);
+                Mockito.verify(orderRepository, Mockito.never()).findById(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_04
+         * Mô tả: Lấy danh sách đơn hàng của người dùng thành công khi email tồn tại.
+         */
+        @Test
+        void getByUser_testChuan1() throws Exception {
+                String email = "user@gmail.com";
+                User mockUser = new User();
+                mockUser.setEmail(email);
+
+                Order o1 = new Order(1L, new Date(), 50000.0, "HN", "0912", 10000.0, 0.5, 0, mockUser);
+                Mockito.when(userRepository.existsByEmail(email)).thenReturn(true);
+                Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+                Mockito.when(orderRepository.findByUserOrderByOrdersIdDesc(mockUser)).thenReturn(Arrays.asList(o1));
+
+                mockMvc.perform(get("/api/orders/user/{email}", email))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.size()").value(1));
+
+                Mockito.verify(userRepository).existsByEmail(email);
+                Mockito.verify(orderRepository).findByUserOrderByOrdersIdDesc(mockUser);
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_05
+         * Mô tả: Báo lỗi Not Found khi lấy đơn hàng của người dùng với email không tồn
+         * tại.
+         */
+        @Test
+        void getByUser_testNgoaiLe1() throws Exception {
+                String invalidEmail = "ghost@gmail.com";
+                Mockito.when(userRepository.existsByEmail(invalidEmail)).thenReturn(false);
+
+                mockMvc.perform(get("/api/orders/user/{email}", invalidEmail))
+                                .andExpect(status().isNotFound());
+
+                Mockito.verify(userRepository).existsByEmail(invalidEmail);
+                Mockito.verify(orderRepository, Mockito.never()).findByUserOrderByOrdersIdDesc(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_06
+         * Mô tả: Cập nhật trạng thái thất bại (Not Found) khi ID đơn hàng không tồn
+         * tại.
+         */
+        @Test
+        void updateStatus_testNgoaiLe1_idKhongTonTai() throws Exception {
+                Mockito.when(orderRepository.existsById(999L)).thenReturn(false);
+
+                mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", 999L, 1))
+                                .andExpect(status().isNotFound());
+
+                Mockito.verify(orderRepository, Mockito.never()).save(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_07
+         * Mô tả: Cập nhật trạng thái giao hàng (status=1) thành công và gửi mail thông
+         * báo đơn hàng đang giao.
+         */
+        @Test
+        void updateStatus_testChuan1_status1_dangGiao() throws Exception {
+                Long orderId = 1L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 1))
+                                .andExpect(status().isOk());
+
+                Mockito.verify(sendMailUtil).sendMailOrderDeliver(mockOrder);
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_08
+         * Mô tả: Cập nhật trạng thái giao thành công (status=2) thành công và gửi mail
+         * thông báo hoàn tất giao hàng.
+         */
+        @Test
+        void updateStatus_testChuan2_status2_thanhCong() throws Exception {
+                Long orderId = 2L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 1, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 2))
+                                .andExpect(status().isOk());
+
+                Mockito.verify(sendMailUtil).sendMailOrderSuccess(mockOrder);
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_09
+         * Mô tả: Xác nhận lỗi BUG khi cập nhật trạng thái giao thành công (status=2)
+         * nhưng hệ thống không gọi hàm trừ số lượng kho.
+         */
+        @Test
+        void updateStatus_testChuan2b_status2_loiKhongTruKho() throws Exception {
+                Long orderId = 2L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 1, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 2))
+                                .andExpect(status().isOk());
+
+                // BUG: productRepository KHÔNG BAO GIỜ được gọi để update số lượng
+                Mockito.verify(productRepository, Mockito.never()).save(any(Product.class));
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_10
+         * Mô tả: Cập nhật trạng thái hủy đơn (status=3) thành công và gửi mail thông
+         * báo hủy đơn.
+         */
+        @Test
+        void updateStatus_testChuan3_status3_huyDon() throws Exception {
+                Long orderId = 3L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 3))
+                                .andExpect(status().isOk());
+
+                Mockito.verify(sendMailUtil).sendMailOrderCancel(mockOrder);
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_11
+         * Mô tả: Cập nhật các trạng thái khác (status=0) thành công mà không kích hoạt
+         * gửi email thông báo.
+         */
+        @Test
+        void updateStatus_testChuan4_statusKhac_khongGuiMail() throws Exception {
+                Long orderId = 4L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 0))
+                                .andExpect(status().isOk());
+
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_12
+         * Mô tả: Cập nhật trạng thái trả hàng hoàn tiền (status=6) thành công và gửi
+         * mail thông báo hủy đơn/trả hàng.
+         */
+        @Test
+        void updateStatus_testChuan5_status6_traHangHoanTien() throws Exception {
+                Long orderId = 5L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 4, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/updateStatus/{id}/{status}", orderId, 6))
+                                .andExpect(status().isOk());
+
+                // status=6 phải gửi mail hủy (cùng nhánh với status=3)
+                Mockito.verify(sendMailUtil).sendMailOrderCancel(mockOrder);
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderSuccess(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_13
+         * Mô tả: Hủy đơn hàng thành công (chuyển sang status=3) và gửi email thông báo
+         * hủy khi ID đơn hàng tồn tại.
+         */
+        @Test
+        void cancel_testChuan1() throws Exception {
+                Long orderId = 1L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/cancel/{orderId}", orderId))
+                                .andExpect(status().isOk());
+
+                Mockito.verify(orderRepository).save(mockOrder);
+                Mockito.verify(sendMailUtil).sendMailOrderCancel(mockOrder);
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_14
+         * Mô tả: Báo lỗi Not Found khi gọi hủy đơn hàng với ID không tồn tại.
+         */
+        @Test
+        void cancel_testNgoaiLe1() throws Exception {
+                Mockito.when(orderRepository.existsById(999L)).thenReturn(false);
+
+                mockMvc.perform(get("/api/orders/cancel/{orderId}", 999L))
+                                .andExpect(status().isNotFound());
+
+                Mockito.verify(orderRepository, Mockito.never()).save(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderCancel(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_15
+         * Mô tả: Giao đơn hàng thành công (chuyển sang status=1) và gửi email thông báo
+         * đang giao khi ID đơn hàng tồn tại.
+         */
+        @Test
+        void deliver_testChuan1() throws Exception {
+                Long orderId = 1L;
+                Order mockOrder = new Order(orderId, new Date(), 100000.0, "HN", "0912", 15000.0, 1.0, 0, null);
+
+                Mockito.when(orderRepository.existsById(orderId)).thenReturn(true);
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+
+                mockMvc.perform(get("/api/orders/deliver/{orderId}", orderId))
+                                .andExpect(status().isOk());
+
+                Mockito.verify(orderRepository).save(mockOrder);
+                Mockito.verify(sendMailUtil).sendMailOrderDeliver(mockOrder);
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_16
+         * Mô tả: Báo lỗi Not Found khi gọi trạng thái đang giao cho đơn hàng có ID
+         * không tồn tại.
+         */
+        @Test
+        void deliver_testNgoaiLe1() throws Exception {
+                Mockito.when(orderRepository.existsById(999L)).thenReturn(false);
+
+                mockMvc.perform(get("/api/orders/deliver/{orderId}", 999L))
+                                .andExpect(status().isNotFound());
+
+                Mockito.verify(orderRepository, Mockito.never()).save(any());
+                Mockito.verify(sendMailUtil, Mockito.never()).sendMailOrderDeliver(any());
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_17
+         * Mô tả: Xác nhận giao đơn hàng thành công (status=2), thực hiện trừ số lượng
+         * sản phẩm trong kho và gửi email thông báo.
+         */
+        @Test
+        void success_testChuan1() throws Exception {
+                Long orderId = 1L;
+                User mockUser = new User();
+
+                Product mockProduct = new Product();
+                mockProduct.setProductId(1L);
+                mockProduct.setQuantity(10);
+                mockProduct.setSold(5);
+
+                OrderDetail mockDetail = new OrderDetail(1L, 2, 20000.0, mockProduct, null);
+
+                Order mockOrder = new Order(orderId, new Date(), 40000.0, "HN", "0912", 15000.0, 1.0, 1, mockUser);
+
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+                Mockito.when(orderDetailRepository.findByOrder(mockOrder)).thenReturn(Arrays.asList(mockDetail));
+                Mockito.when(productRepository.findById(1L)).thenReturn(Optional.of(mockProduct));
+                Mockito.when(productRepository.save(mockProduct)).thenReturn(mockProduct);
+
+                mockMvc.perform(get("/api/orders/success/{orderId}", orderId))
+                                .andExpect(status().isOk());
+
+                // Xác nhận status=2, cập nhật kho, gửi mail thành công
+                Mockito.verify(orderRepository).save(mockOrder);
+                Mockito.verify(productRepository).save(mockProduct);
+                Mockito.verify(sendMailUtil).sendMailOrderSuccess(mockOrder);
+        }
+
+        /**
+         * Test Case ID: TC_ORDER_18
+         * Mô tả: Kiểm tra tính toán chính xác của số lượng tồn kho (quantity) và số
+         * lượng đã bán (sold) sau khi xác nhận đơn thành công.
+         */
+        @Test
+        void success_testChuan2_kiemTraGiaTriTruKho() throws Exception {
+                Long orderId = 2L;
+
+                Product mockProduct = new Product();
+                mockProduct.setProductId(10L);
+                mockProduct.setQuantity(10); // Tồn kho ban đầu
+                mockProduct.setSold(5); // Đã bán ban đầu
+
+                // Đơn hàng gồm 2 sản phẩm productId=10
+                OrderDetail mockDetail = new OrderDetail(1L, 2, 40000.0, mockProduct, null);
+
+                Order mockOrder = new Order(orderId, new Date(), 40000.0, "HCM", "0987", 20000.0, 1.0, 1, null);
+
+                Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
+                Mockito.when(orderRepository.save(mockOrder)).thenReturn(mockOrder);
+                Mockito.when(orderDetailRepository.findByOrder(mockOrder)).thenReturn(Arrays.asList(mockDetail));
+                Mockito.when(productRepository.findById(10L)).thenReturn(Optional.of(mockProduct));
+                Mockito.when(productRepository.save(any(Product.class))).thenReturn(mockProduct);
+
+                mockMvc.perform(get("/api/orders/success/{orderId}", orderId))
+                                .andExpect(status().isOk());
+
+                // Bắt đối tượng Product được truyền vào save() để kiểm tra giá trị thực tế
+                ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+                Mockito.verify(productRepository).save(productCaptor.capture());
+
+                Product savedProduct = productCaptor.getValue();
+                assertEquals(8, savedProduct.getQuantity(),
+                                "[BUG DETECT] quantity phải giảm đúng: 10 - 2 = 8, nhưng thực tế là "
+                                                + savedProduct.getQuantity());
+                assertEquals(7, savedProduct.getSold(),
+                                "[BUG DETECT] sold phải tăng đúng: 5 + 2 = 7, nhưng thực tế là "
+                                                + savedProduct.getSold());
+        }
 }

@@ -36,7 +36,7 @@ import com.nongsan.entity.User;
 		"spring.jpa.hibernate.ddl-auto=create-drop",
 		"spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
 })
-@AutoConfigureTestDatabase(replace = Replace.ANY)
+@AutoConfigureTestDatabase(replace = Replace.NONE)
 class StatisticalRepositoryTest {
 
 	@Autowired
@@ -53,6 +53,14 @@ class StatisticalRepositoryTest {
 		seedData();
 	}
 
+	// ==========================================
+	// MODULE: THỐNG KÊ THEO THÁNG
+	// ==========================================
+
+	/**
+	 * Test Case ID: TC_REPO_01
+	 * Mô tả: Lấy doanh thu theo tháng trong năm, nhóm theo tháng.
+	 */
 	@Test
 	void getMonthOfYear_shouldReturnRevenueGroupedByMonth() {
 		List<Object[]> rows = statisticalRepository.getMonthOfYear(2025);
@@ -64,6 +72,14 @@ class StatisticalRepositoryTest {
 		assertEquals(180.0, totalsByMonth.get(2), 0.0001);
 	}
 
+	// ==========================================
+	// MODULE: LẤY DANH SÁCH NĂM
+	// ==========================================
+
+	/**
+	 * Test Case ID: TC_REPO_02
+	 * Mô tả: Lấy danh sách các năm có đơn hàng hoàn thành, sắp xếp giảm dần.
+	 */
 	@Test
 	void getYears_shouldReturnDistinctYearsInDescendingOrder() {
 		List<Integer> years = statisticalRepository.getYears();
@@ -71,6 +87,14 @@ class StatisticalRepositoryTest {
 		assertEquals(List.of(2025, 2024), years);
 	}
 
+	// ==========================================
+	// MODULE: THỐNG KÊ DOANH THU
+	// ==========================================
+
+	/**
+	 * Test Case ID: TC_REPO_03
+	 * Mô tả: Lấy tổng doanh thu năm, chỉ tính đơn hàng đã hoàn thành (status=2).
+	 */
 	@Test
 	void getRevenueByYear_shouldReturnCompletedOrderRevenueOnly() {
 		Double revenue = statisticalRepository.getRevenueByYear(2025);
@@ -78,6 +102,10 @@ class StatisticalRepositoryTest {
 		assertEquals(270.0, revenue, 0.0001);
 	}
 
+	/**
+	 * Test Case ID: TC_REPO_04
+	 * Mô tả: Lấy thống kê doanh thu theo danh mục sản phẩm bán chạy.
+	 */
 	@Test
 	void getCategoryBestSeller_shouldReturnCategoryTotals() {
 		List<Object[]> rows = statisticalRepository.getCategoryBestSeller();
@@ -90,6 +118,14 @@ class StatisticalRepositoryTest {
 		assertEquals(160.0, ((Number) firstRow[2]).doubleValue(), 0.0001);
 	}
 
+	// ==========================================
+	// MODULE: THỐNG KÊ TÀI CHÍNH
+	// ==========================================
+
+	/**
+	 * Test Case ID: TC_REPO_05
+	 * Mô tả: Lấy tổng doanh thu, chi phí và phí vận chuyển trong năm.
+	 */
 	@Test
 	void getFinancialData_shouldReturnRevenueCostAndShippingTotals() {
 		List<Object[]> rows = statisticalRepository.getFinancialData(2025);
@@ -102,6 +138,10 @@ class StatisticalRepositoryTest {
 		assertEquals(30.0, ((Number) row[2]).doubleValue(), 0.0001);
 	}
 
+	/**
+	 * Test Case ID: TC_REPO_06
+	 * Mô tả: Lấy doanh thu và chi phí theo từng tháng trong năm.
+	 */
 	@Test
 	void getMonthlyFinancials_shouldReturnMonthlyRevenueAndCost() {
 		List<Object[]> rows = statisticalRepository.getMonthlyFinancials(2025);

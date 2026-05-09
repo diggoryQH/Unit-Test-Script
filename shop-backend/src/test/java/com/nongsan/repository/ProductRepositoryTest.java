@@ -73,7 +73,7 @@ class ProductRepositoryTest {
     }
 
     /**
-     * Test Case ID: TC_01_REPO
+     * Test Case ID: TC_PRO_22
      * Mô tả: Lấy danh sách sản phẩm được đánh giá sắp xếp theo rating giảm dần.
      */
     @Test
@@ -88,7 +88,7 @@ class ProductRepositoryTest {
     }
 
     /**
-     * Test Case ID: TC_02_REPO
+     * Test Case ID: TC_PRO_23
      * Mô tả: Lấy danh sách gợi ý ưu tiên cùng danh mục (loại trừ chính nó), sau đó đến khác danh mục.
      */
     @Test

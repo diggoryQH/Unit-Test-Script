@@ -68,7 +68,7 @@ class FavoritesApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_01
+     * Test Case ID: TC_FAV_01
      * Mô tả: Lấy danh sách yêu thích thành công khi Email tồn tại.
      */
     @Test
@@ -92,7 +92,7 @@ class FavoritesApiTest {
     }
 
     /**
-     * Test Case ID: TC_02
+     * Test Case ID: TC_FAV_02
      * Mô tả: Báo lỗi Not Found khi Email không tồn tại.
      */
     @Test
@@ -114,7 +114,7 @@ class FavoritesApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_03
+     * Test Case ID: TC_FAV_03
      * Mô tả: Trả về số lượng yêu thích (count) khi Sản phẩm tồn tại.
      */
     @Test
@@ -136,7 +136,7 @@ class FavoritesApiTest {
     }
 
     /**
-     * Test Case ID: TC_04
+     * Test Case ID: TC_FAV_04
      * Mô tả: Báo lỗi Not Found khi Sản phẩm không tồn tại.
      */
     @Test
@@ -158,7 +158,7 @@ class FavoritesApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_05
+     * Test Case ID: TC_FAV_05
      * Mô tả: Lấy bản ghi Favorite thành công khi cả Sản phẩm và User đều tồn tại.
      */
     @Test
@@ -186,7 +186,7 @@ class FavoritesApiTest {
     }
 
     /**
-     * Test Case ID: TC_06
+     * Test Case ID: TC_FAV_06
      * Mô tả: Báo lỗi Not Found khi User tồn tại nhưng Sản phẩm KHÔNG tồn tại.
      */
     @Test
@@ -205,7 +205,7 @@ class FavoritesApiTest {
     }
 
     /**
-     * Test Case ID: TC_07
+     * Test Case ID: TC_FAV_07
      * Mô tả: Báo lỗi Not Found khi User KHÔNG tồn tại (Bỏ qua luôn check Sản phẩm).
      */
     @Test
@@ -227,7 +227,7 @@ class FavoritesApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_08
+     * Test Case ID: TC_FAV_08
      * Mô tả: Lưu Favorite thành công (Lưu ý: API endpoint là /email nhưng body là Favorite).
      */
     @Test
@@ -252,7 +252,7 @@ class FavoritesApiTest {
     // ==========================================
 
     /**
-     * Test Case ID: TC_09
+     * Test Case ID: TC_FAV_09
      * Mô tả: Xóa Favorite thành công khi ID tồn tại.
      */
     @Test
@@ -269,7 +269,7 @@ class FavoritesApiTest {
     }
 
     /**
-     * Test Case ID: TC_10
+     * Test Case ID: TC_FAV_10
      * Mô tả: Xóa Favorite thất bại khi ID không tồn tại.
      */
     @Test
