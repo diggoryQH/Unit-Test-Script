@@ -40,21 +40,22 @@ class OrderDetailApiTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean private OrderDetailRepository orderDetailRepository;
-    @MockBean private OrderRepository orderRepository;
+    @MockBean
+    private OrderDetailRepository orderDetailRepository;
+    @MockBean
+    private OrderRepository orderRepository;
 
-    @MockBean private UserDetailsServiceImpl userDetailsService;
-    @MockBean private AuthEntryPointJwt unauthorizedHandler;
-    @MockBean private AuthTokenFilter authTokenFilter;
-
-    // =========================================
-    // getByOrder() — GET /api/orderDetail/order/{id}
-    // Nhánh: 2 (orderId tồn tại / không tồn tại)
-    // =========================================
+    @MockBean
+    private UserDetailsServiceImpl userDetailsService;
+    @MockBean
+    private AuthEntryPointJwt unauthorizedHandler;
+    @MockBean
+    private AuthTokenFilter authTokenFilter;
 
     /**
-     * TC_ORDERDETAIL_01 | getByOrder | Nhánh: orderId tồn tại
-     * Lấy chi tiết sản phẩm trong đơn hàng thành công.
+     * Test Case ID: TC_ORDERDETAIL_01
+     * Mô tả: Lấy danh sách chi tiết các sản phẩm trong đơn hàng thành công khi ID
+     * đơn hàng tồn tại.
      */
     @Test
     void getByOrder_testChuan1() throws Exception {
@@ -79,7 +80,9 @@ class OrderDetailApiTest {
     }
 
     /**
-     * TC_ORDERDETAIL_02 | getByOrder | Nhánh: orderId không tồn tại → 404
+     * Test Case ID: TC_ORDERDETAIL_02
+     * Mô tả: Báo lỗi Not Found khi cố lấy danh sách chi tiết của một đơn hàng không
+     * tồn tại.
      */
     @Test
     void getByOrder_testNgoaiLe1() throws Exception {
