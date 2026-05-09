@@ -15,8 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 class GHNServiceTest {
 
-	private static final String EXPECTED_URL =
-			"https://online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee?to_ward_code=12345&to_district_id=1458&weight=1000&service_type_id=2";
+	private static final String EXPECTED_URL = "https://online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee?to_ward_code=12345&to_district_id=1458&weight=1000&service_type_id=2";
 
 	private RestTemplate restTemplate;
 	private MockRestServiceServer server;
@@ -29,6 +28,11 @@ class GHNServiceTest {
 		ghnService = new TestableGHNService(restTemplate);
 	}
 
+	/**
+	 * Test Case ID: TC_GHN_01
+	 * Mô tả: Tính toán phí vận chuyển thành công và trả về tổng tiền chính xác khi
+	 * API của GHN phản hồi mã thành công (200).
+	 */
 	@Test
 	void calculateFee_shouldReturnTotalWhenApiRespondsSuccessfully() {
 		server.expect(requestTo(EXPECTED_URL))
@@ -44,6 +48,11 @@ class GHNServiceTest {
 		server.verify();
 	}
 
+	/**
+	 * Test Case ID: TC_GHN_02
+	 * Mô tả: Trả về phí vận chuyển bằng 0 khi API của GHN phản hồi mã code không
+	 * thành công.
+	 */
 	@Test
 	void calculateFee_shouldReturnZeroWhenApiCodeIsNotSuccess() {
 		server.expect(requestTo(EXPECTED_URL))
@@ -57,6 +66,11 @@ class GHNServiceTest {
 		server.verify();
 	}
 
+	/**
+	 * Test Case ID: TC_GHN_03
+	 * Mô tả: Trả về phí vận chuyển bằng 0 khi hệ thống bắt gặp lỗi Server/Gateway
+	 * kết nối đến GHN (HttpStatus.INTERNAL_SERVER_ERROR).
+	 */
 	@Test
 	void calculateFee_shouldReturnZeroWhenGatewayFails() {
 		server.expect(requestTo(EXPECTED_URL))
