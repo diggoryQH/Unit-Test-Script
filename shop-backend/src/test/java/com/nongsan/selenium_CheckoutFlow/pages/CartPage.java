@@ -45,25 +45,35 @@ public class CartPage {
 
     public void pressArrowUp(int rowIndex, int times) {
         By locator = By.xpath("//app-cart//table//tbody//tr[" + rowIndex + "]//input[@type='number']");
-        // Click lần đầu để focus
-        try {
-            wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
-        } catch (Exception ignored) {}
-
+        
         for (int i = 0; i < times; i++) {
             try {
-                // Mỗi lần bấm mũi tên đều tìm lại element để tránh Stale
                 WebElement input = wait.until(ExpectedConditions.elementToBeClickable(locator));
+                String before = input.getAttribute("value");
+                
                 input.sendKeys(Keys.ARROW_UP);
-                try { Thread.sleep(200); } catch (Exception ignored) {}
-            } catch (StaleElementReferenceException e) {
-                i--; // Nếu lỗi thì thực hiện lại lần này
+                input.sendKeys(Keys.ENTER);
+                
+                // Đợi một chút để Angular ngOnInit() tải lại xong
+                waitFor(1); 
+                
+                input = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+                String after = input.getAttribute("value");
+                
+                System.out.println("[INFO] Lan bam " + (i+1) + ": " + before + " -> " + after);
+                
+                // Nếu đã đạt đến mức không thể tăng được nữa sau 2 lần thử thì mới dừng
+                if (before.equals(after) && i > 2) {
+                     break;
+                }
+            } catch (Exception e) {
+                waitFor(1);
             }
         }
-        
-        try {
-            wait.until(ExpectedConditions.elementToBeClickable(locator)).sendKeys(Keys.ENTER);
-        } catch (Exception ignored) {}
+    }
+    
+    private void waitFor(int seconds) {
+        try { Thread.sleep(seconds * 1000); } catch (InterruptedException ignored) {}
     }
 
     public String getQuantityValue(int rowIndex) {
