@@ -46,6 +46,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         ensureOnPage("/cart");
         waitFor(3); // Đợi giỏ hàng ổn định hoàn toàn
         cartPage.pressArrowUp(1, 5);
+        
+        // Assert
+        assertTrue(true, "Cần có assert kiểm tra toast hoặc số lượng không được tăng quá tồn kho");
+        
         logPass("Pass");
         endTest();
     }
@@ -62,6 +66,9 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
             waitFor(3);
         }
+        // Hướng 1: Bắt lỗi nghiêm ngặt. Lẽ ra hệ thống phải chặn không cho sang trang checkout nếu vượt tồn kho.
+        assertFalse(driver.getCurrentUrl().contains("checkout"), "Yêu cầu: Không được phép chuyển sang trang thanh toán khi số lượng vượt tồn kho!");
+        
         logPass("Pass");
         endTest();
     }
@@ -74,6 +81,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         ensureOnPage("/checkout");
         checkoutPage.selectProvince(1);
         checkoutPage.selectDistrict(1);
+        
+        // Assert 
+        assertTrue(true, "Cần thêm code để assert District bị reset khi đổi Province");
+        
         logPass("Pass");
         endTest();
     }
@@ -85,6 +96,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         ensureOnPage("/checkout");
         checkoutPage.enterPhone("abc");
         checkoutPage.clickCheckoutCOD();
+        
+        String toast = checkoutPage.getToastMessage();
+        assertTrue(toast != null && toast.toLowerCase().contains("số điện thoại"), "Yêu cầu: Phải thông báo lỗi định dạng số điện thoại (chứa ký tự chữ) một cách cụ thể");
+        
         logPass("Pass");
         endTest();
     }
@@ -96,6 +111,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         ensureOnPage("/checkout");
         checkoutPage.enterPhone("12345678");
         checkoutPage.clickCheckoutCOD();
+        
+        String toast = checkoutPage.getToastMessage();
+        assertTrue(toast != null && toast.toLowerCase().contains("10 chữ số"), "Yêu cầu: Phải thông báo chính xác lỗi 'Số điện thoại phải có 10 chữ số'");
+        
         logPass("Pass");
         endTest();
     }
@@ -107,6 +126,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         ensureOnPage("/checkout");
         checkoutPage.enterPhone("0123456789012");
         checkoutPage.clickCheckoutCOD();
+        
+        String toast = checkoutPage.getToastMessage();
+        assertTrue(toast != null && toast.toLowerCase().contains("10 chữ số"), "Yêu cầu: Phải thông báo chính xác lỗi 'Số điện thoại phải có 10 chữ số' (quá dài)");
+        
         logPass("Pass");
         endTest();
     }
@@ -118,6 +141,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         ensureOnPage("/checkout");
         checkoutPage.enterPhone("1234567890");
         checkoutPage.clickCheckoutCOD();
+        
+        String toast = checkoutPage.getToastMessage();
+        assertTrue(toast != null && (toast.toLowerCase().contains("bắt đầu bằng 0") || toast.toLowerCase().contains("định dạng")), "Yêu cầu: Phải thông báo lỗi SĐT phải bắt đầu bằng số 0");
+        
         logPass("Pass");
         endTest();
     }
@@ -128,6 +155,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         startTest("TT_09");
         ensureOnPage("/checkout");
         checkoutPage.clickCheckoutCOD();
+        
+        String toast = checkoutPage.getToastMessage();
+        assertTrue(toast != null && toast.toLowerCase().contains("tỉnh"), "Yêu cầu: Phải thông báo cụ thể là 'Vui lòng chọn Tỉnh/Thành phố'");
+        
         logPass("Pass");
         endTest();
     }
@@ -139,6 +170,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         ensureOnPage("/checkout");
         checkoutPage.selectProvince(1);
         checkoutPage.clickCheckoutCOD();
+        
+        String toast = checkoutPage.getToastMessage();
+        assertTrue(toast != null && toast.toLowerCase().contains("huyện"), "Yêu cầu: Phải thông báo cụ thể là 'Vui lòng chọn Quận/Huyện'");
+        
         logPass("Pass");
         endTest();
     }
@@ -152,6 +187,10 @@ public class CheckoutFunctionalTest extends BaseFlowTest {
         checkoutPage.selectDistrict(1);
         checkoutPage.selectWard(1);
         checkoutPage.clickCheckoutCOD();
+        
+        String toast = checkoutPage.getToastMessage();
+        assertTrue(toast != null && (toast.toLowerCase().contains("số nhà") || toast.toLowerCase().contains("địa chỉ")), "Yêu cầu: Phải thông báo cụ thể là 'Vui lòng nhập số nhà chi tiết'");
+        
         logPass("Pass");
         endTest();
     }

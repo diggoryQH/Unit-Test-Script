@@ -100,7 +100,8 @@ public class CheckoutPage {
 
     public String getToastMessage() {
         try {
-            WebElement toast = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("swal2-title")));
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            WebElement toast = shortWait.until(ExpectedConditions.visibilityOfElementLocated(By.className("swal2-title")));
             return toast.getText();
         } catch (Exception e) {
             return "";
