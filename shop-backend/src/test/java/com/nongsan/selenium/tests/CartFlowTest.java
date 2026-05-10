@@ -6,6 +6,8 @@ import com.nongsan.selenium.utils.DriverManager;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.JavascriptExecutor;
 
+import java.sql.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -23,10 +25,84 @@ public class CartFlowTest extends BaseTest {
     private static final String SEARCH_KEYWORD = "Nấm";
     private static final String SEARCH_NO_RESULT = "@#$%!^&*()";
 
+    // ==================== CLEANUP METHOD ====================
+
+    /**
+     * Xóa tất cả cart_details của tài khoản test trước khi chạy test.
+     * Đảm bảo giỏ hàng sạch trước mỗi test case.
+     */
+    private void cleanupCartBeforeTest() {
+        logInfo("=== CLEANUP: Xóa cart_details trước khi test ===");
+        try (Connection conn = DriverManager.getDataSourceConnection()) {
+            // Xóa cart_details theo cart_id của user test
+            String sql = "DELETE cd FROM cart_details cd " +
+                         "JOIN carts c ON cd.cart_id = c.cart_id " +
+                         "JOIN users u ON c.user_id = u.user_id " +
+                         "WHERE u.email = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, VALID_EMAIL);
+                int deleted = pstmt.executeUpdate();
+                logInfo("Đã xóa " + deleted + " cart_details cũ của user: " + VALID_EMAIL);
+            }
+        } catch (SQLException e) {
+            logInfo("Cleanup thất bại (có thể do chưa có dữ liệu): " + e.getMessage());
+        }
+    }
+
+    /**
+     * Rollback xóa cart_details theo danh sách IDs.
+     * Gọi sau khi test kết thúc để dọn dẹp dữ liệu test.
+     * 
+     * @param cartDetailIds Danh sách IDs cần xóa
+     */
+    private void rollbackCartDetails(long... cartDetailIds) {
+        if (cartDetailIds == null || cartDetailIds.length == 0) return;
+        
+        logInfo("=== ROLLBACK: Xóa " + cartDetailIds.length + " cart_details ===");
+        try (Connection conn = DriverManager.getDataSourceConnection()) {
+            for (long id : cartDetailIds) {
+                try {
+                    conn.createStatement().executeUpdate("DELETE FROM cart_details WHERE cart_detail_id = " + id);
+                    logInfo("Đã xóa cart_detail_id: " + id);
+                } catch (SQLException e) {
+                    logInfo("Không xóa được cart_detail_id " + id + ": " + e.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            logInfo("Rollback thất bại: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Lấy cart_detail_id đầu tiên trong giỏ hàng của user test.
+     * @return cart_detail_id hoặc -1 nếu không có
+     */
+    private long getFirstCartDetailId() {
+        try (Connection conn = DriverManager.getDataSourceConnection()) {
+            String sql = "SELECT cd.cart_detail_id FROM cart_details cd " +
+                         "JOIN carts c ON cd.cart_id = c.cart_id " +
+                         "JOIN users u ON c.user_id = u.user_id " +
+                         "WHERE u.email = ? LIMIT 1";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, VALID_EMAIL);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    return rs.getLong("cart_detail_id");
+                }
+            }
+        } catch (SQLException e) {
+            logInfo("Lấy cart_detail_id thất bại: " + e.getMessage());
+        }
+        return -1;
+    }
+
     @BeforeEach
     @Override
     public void setup() {
         super.setup();
+
+        // CLEANUP: Xóa cart_details cũ trước khi test
+        cleanupCartBeforeTest();
 
         driver.manage().deleteAllCookies();
 
@@ -172,6 +248,21 @@ public class CartFlowTest extends BaseTest {
         } finally {
             endTest();
         }
+    }
+
+    @AfterEach
+    public void tearDown() {
+        // ROLLBACK: Xóa cart_details đã thêm trong test này
+        try {
+            long cartDetailId = getFirstCartDetailId();
+            if (cartDetailId > 0) {
+                rollbackCartDetails(cartDetailId);
+            }
+        } catch (Exception e) {
+            logInfo("Rollback sau test thất bại: " + e.getMessage());
+        }
+        
+        System.out.println("-".repeat(60));
     }
 
     // ==================== HELPER METHODS ====================
