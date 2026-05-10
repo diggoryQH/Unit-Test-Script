@@ -63,13 +63,17 @@ public abstract class BaseFlowTest {
 
     protected void dismissPopups() {
         try {
-            WebElement swalBtn = driver.findElement(By.cssSelector(".swal2-confirm"));
-            if (swalBtn.isDisplayed()) {
-                swalBtn.click();
+            driver.manage().timeouts().implicitlyWait(0, java.util.concurrent.TimeUnit.SECONDS);
+            java.util.List<WebElement> swalBtns = driver.findElements(By.cssSelector(".swal2-confirm"));
+            if (!swalBtns.isEmpty() && swalBtns.get(0).isDisplayed()) {
+                swalBtns.get(0).click();
                 System.out.println("[INFO] Đã đóng Popup/Swal thành công.");
+                waitFor(1);
             }
-            waitFor(1);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        } finally {
+            driver.manage().timeouts().implicitlyWait(10, java.util.concurrent.TimeUnit.SECONDS);
+        }
     }
 
     protected boolean isOrderCreatedInDb(String email) {
@@ -118,10 +122,16 @@ public abstract class BaseFlowTest {
     }
 
     protected void assertTrue(boolean condition, String message) {
-        if (!condition) { logFail(message); Assertions.fail(message); }
+        if (!condition) { 
+            logFail(message); 
+            Assertions.fail(message); 
+        }
     }
 
     protected void assertFalse(boolean condition, String message) {
-        if (condition) { logFail(message); Assertions.fail(message); }
+        if (condition) { 
+            logFail(message); 
+            Assertions.fail(message); 
+        }
     }
 }
