@@ -104,4 +104,70 @@ public class CartPage {
     private void log(String message) {
         System.out.println("[CartPage] " + message);
     }
+
+    /**
+     * Xóa sản phẩm đầu tiên trong giỏ hàng bằng cách click vào nút xóa.
+     * @return true nếu xóa thành công, false nếu không có sản phẩm để xóa
+     */
+    @SuppressWarnings("unused")
+    public boolean removeFirstCartItem() {
+        try {
+            // Tìm nút xóa của sản phẩm đầu tiên trong giỏ hàng
+            By deleteButtonLocator = By.xpath(
+                "//app-cart//table[contains(@class,'ps-table--shopping-cart')]//tbody//tr[1]//a[contains(@class,'ps-remove')] " +
+                "| //app-cart//table[contains(@class,'ps-table--shopping-cart')]//tbody//tr[1]//button[contains(@class,'remove')]"
+            );
+            
+            WebElement deleteBtn = wait.until(ExpectedConditions.elementToBeClickable(deleteButtonLocator));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", deleteBtn);
+            log("Đã click nút xóa sản phẩm đầu tiên");
+            
+            // Đợi toast message hoặc cập nhật UI
+            Thread.sleep(1500);
+            return true;
+        } catch (Exception e) {
+            log("Không tìm thấy nút xóa hoặc giỏ hàng trống: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Lấy cartDetailId của sản phẩm đầu tiên trong giỏ hàng.
+     * @return cartDetailId hoặc -1 nếu không tìm thấy
+     */
+    public long getFirstCartDetailId() {
+        try {
+            // Tìm phần tử chứa cartDetailId (thường nằm trong data attribute hoặc URL)
+            By firstItemLocator = By.xpath(
+                "//app-cart//table[contains(@class,'ps-table--shopping-cart')]//tbody//tr[1]"
+            );
+            WebElement firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(firstItemLocator));
+            
+            // Thử lấy từ data attribute
+            String dataId = firstRow.getDomAttribute("data-id");
+            if (dataId != null && !dataId.isEmpty()) {
+                return Long.parseLong(dataId);
+            }
+            
+            // Thử lấy từ URL trong link sản phẩm
+            By productLinkLocator = By.xpath(
+                "//app-cart//table[contains(@class,'ps-table--shopping-cart')]//tbody//tr[1]//a[contains(@href,'/product-detail')]"
+            );
+            WebElement productLink = firstRow.findElement(productLinkLocator);
+            String href = productLink.getDomAttribute("href");
+            
+            // Trích xuất ID từ URL, ví dụ: /product-detail/123 -> 123
+            if (href != null && href.contains("/product-detail/")) {
+                String[] parts = href.split("/product-detail/");
+                if (parts.length > 1) {
+                    return Long.parseLong(parts[1].split("[?]")[0]);
+                }
+            }
+            
+            return -1;
+        } catch (Exception e) {
+            log("Không lấy được cartDetailId: " + e.getMessage());
+            return -1;
+        }
+    }
 }

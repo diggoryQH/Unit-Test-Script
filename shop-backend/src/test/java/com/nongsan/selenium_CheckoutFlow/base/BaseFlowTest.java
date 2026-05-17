@@ -45,11 +45,11 @@ public abstract class BaseFlowTest {
     }
 
     protected void startTest(String testName) {
-        System.out.println("\n>>> Bắt đầu: " + testName + " <<<");
+        System.out.println("\n>>> Bat dau: " + testName + " <<<");
     }
 
     protected void endTest() {
-        System.out.println(">>> Kết thúc bài test <<<\n");
+        System.out.println(">>> Ket thuc bai test <<<\n");
     }
 
     protected void logInfo(String message) { System.out.println("[INFO] " + message); }
@@ -57,19 +57,23 @@ public abstract class BaseFlowTest {
     protected void logFail(String message) { System.err.println("[FAIL] " + message); }
 
     protected void logError(String message, Exception e) {
-        System.out.println("[ERROR] " + message + " | URL hiện tại: " + driver.getCurrentUrl());
+        System.out.println("[ERROR] " + message + " | URL hien tai: " + driver.getCurrentUrl());
         if (e != null) System.out.println("[DETAIL] " + e.getMessage());
     }
 
     protected void dismissPopups() {
         try {
-            WebElement swalBtn = driver.findElement(By.cssSelector(".swal2-confirm"));
-            if (swalBtn.isDisplayed()) {
-                swalBtn.click();
-                System.out.println("[INFO] Đã đóng Popup/Swal thành công.");
+            driver.manage().timeouts().implicitlyWait(0, java.util.concurrent.TimeUnit.SECONDS);
+            java.util.List<WebElement> swalBtns = driver.findElements(By.cssSelector(".swal2-confirm"));
+            if (!swalBtns.isEmpty() && swalBtns.get(0).isDisplayed()) {
+                swalBtns.get(0).click();
+                System.out.println("[INFO] Da dong Popup/Swal thanh cong.");
+                waitFor(1);
             }
-            waitFor(1);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        } finally {
+            driver.manage().timeouts().implicitlyWait(10, java.util.concurrent.TimeUnit.SECONDS);
+        }
     }
 
     protected boolean isOrderCreatedInDb(String email) {
@@ -81,9 +85,9 @@ public abstract class BaseFlowTest {
                 pstmt.setString(1, email);
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) return true;
-                logInfo("Đợi DB lần " + (i + 1) + ": Chưa tìm thấy đơn hàng cho " + email);
+                logInfo("Doi DB lan " + (i + 1) + ": Chua tim thay don hang cho " + email);
             } catch (SQLException e) {
-                logInfo("Đợi DB lần " + (i + 1) + ": Lỗi truy vấn - " + e.getMessage());
+                logInfo("Doi DB lan " + (i + 1) + ": Loi truy van - " + e.getMessage());
             }
             waitFor(2);
         }
@@ -103,9 +107,9 @@ public abstract class BaseFlowTest {
             
             // Bước 2: Xóa đơn hàng chính
             conn.prepareStatement("DELETE FROM orders WHERE orders_id = " + id).executeUpdate();
-            System.out.println("[INFO] Rollback thành công cho đơn hàng ID: " + id);
+            System.out.println("[INFO] Rollback thanh cong cho don hang ID: " + id);
         } catch (SQLException e) {
-            System.out.println("[WARN] Lỗi Rollback: " + e.getMessage());
+            System.out.println("[WARN] Loi Rollback: " + e.getMessage());
         }
     }
 
@@ -118,10 +122,23 @@ public abstract class BaseFlowTest {
     }
 
     protected void assertTrue(boolean condition, String message) {
-        if (!condition) { logFail(message); Assertions.fail(message); }
+        if (!condition) { 
+            logFail(message); 
+            Assertions.fail(message); 
+        }
     }
 
-    protected void assertFalse(boolean condition, String message) {
-        if (condition) { logFail(message); Assertions.fail(message); }
+    protected int getProductStock(String productName) {
+        try (Connection conn = java.sql.DriverManager.getConnection("jdbc:mysql://localhost:3306/nongsan", "root", "123456")) {
+            // Gia su bang la products, cot la quantity và name
+            String sql = "SELECT quantity FROM products WHERE name = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, productName);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt("quantity");
+        } catch (SQLException e) {
+            logInfo("Loi truy van ton kho cho " + productName + ": " + e.getMessage());
+        }
+        return -1;
     }
 }

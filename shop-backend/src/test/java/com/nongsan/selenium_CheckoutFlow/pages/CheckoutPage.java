@@ -82,26 +82,30 @@ public class CheckoutPage {
 
     public String getShippingFee() {
         try {
-            WebElement feeElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[contains(text(),'Phí vận chuyển')]/following-sibling::span")));
+            // Theo HTML: <p>Phí vận chuyển: <span class="text-primary">+ {{shippingFee}}</span></p>
+            WebElement feeElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[contains(text(),'Phí vận chuyển')]/span")));
             return feeElement.getText();
         } catch (Exception e) {
-            return "0";
+            return "Khong tim thay phi ship";
         }
     }
 
     public String getTotalPay() {
         try {
-            WebElement totalElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h4[contains(text(),'Tổng cộng')]/span")));
+            // Theo HTML: <h3 class="mt-3">Tổng cộng: <span class="text-danger">{{totalPay}}</span></h3>
+            WebElement totalElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h3[contains(text(),'Tổng cộng')]/span")));
             return totalElement.getText();
         } catch (Exception e) {
-            return "0";
+            return "Khong tim thay tong tien";
         }
     }
 
     public String getToastMessage() {
         try {
-            WebElement toast = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("swal2-title")));
-            return toast.getText();
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5));
+            // Tim bat ky thanh phan nao cua SweetAlert co chua text
+            WebElement swal = shortWait.until(ExpectedConditions.visibilityOfElementLocated(By.className("swal2-popup")));
+            return swal.getText();
         } catch (Exception e) {
             return "";
         }
