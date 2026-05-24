@@ -17,6 +17,8 @@ import javax.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -38,6 +40,8 @@ import com.nongsan.entity.User;
 @Transactional
 class StatisticalRepositoryTest {
 
+	private static final Logger log = LoggerFactory.getLogger(StatisticalRepositoryTest.class);
+
 	@Autowired
 	private StatisticalRepository statisticalRepository;
 
@@ -50,6 +54,7 @@ class StatisticalRepositoryTest {
 	@BeforeEach
 	void setUp() {
 		seedData();
+		verifySeededData();
 	}
 
 	// ==========================================
@@ -202,6 +207,75 @@ class StatisticalRepositoryTest {
 		entityManager.clear();
 
 		assertNotNull(statisticalRepository);
+	}
+
+	private void verifySeededData() {
+		log.info("=== VERIFYING SEEDED DATA ===");
+
+		// Verify Categories
+		List<Map<String, Object>> categories = jdbcTemplate.queryForList(
+				"SELECT category_name FROM categories");
+		log.info("Categories: {} records", categories.size());
+		categories.forEach(c -> log.info("  - {}", c.get("category_name")));
+		assertEquals(2, categories.size());
+		assertTrue(categories.stream().anyMatch(c -> "Fruit".equals(c.get("category_name"))));
+		assertTrue(categories.stream().anyMatch(c -> "Vegetable".equals(c.get("category_name"))));
+
+		// Verify Users
+		List<Map<String, Object>> users = jdbcTemplate.queryForList(
+				"SELECT name, email FROM users WHERE email = ?", "customer@example.com");
+		log.info("Users: {} record", users.size());
+		users.forEach(u -> log.info("  - {} ({})", u.get("name"), u.get("email")));
+		assertEquals(1, users.size());
+		assertEquals("Test Customer", users.get(0).get("name"));
+		assertEquals("customer@example.com", users.get(0).get("email"));
+
+		// Verify Products
+		List<Map<String, Object>> products = jdbcTemplate.queryForList(
+				"SELECT name, price, cost_price FROM products");
+		log.info("Products: {} records", products.size());
+		products.forEach(p -> log.info("  - {} (price: {}, cost: {})",
+				p.get("name"), p.get("price"), p.get("cost_price")));
+		assertEquals(2, products.size());
+		assertTrue(products.stream().anyMatch(p -> "Apple".equals(p.get("name")) && ((Number) p.get("price")).doubleValue() == 20.0));
+		assertTrue(products.stream().anyMatch(p -> "Carrot".equals(p.get("name")) && ((Number) p.get("price")).doubleValue() == 15.0));
+
+		// Verify Orders - 4 orders: 2 completed in 2025, 1 pending in 2025, 1 completed in 2024
+		List<Map<String, Object>> orders = jdbcTemplate.queryForList(
+				"SELECT amount, shipping_fee, status FROM orders");
+		log.info("Orders: {} records", orders.size());
+
+		// Count completed orders (status=2) for 2025
+		List<Map<String, Object>> completedOrders2025 = jdbcTemplate.queryForList(
+				"SELECT COUNT(*) as cnt FROM orders WHERE status = 2 AND YEAR(order_date) = 2025");
+		log.info("  Completed 2025: {} orders", completedOrders2025.get(0).get("cnt"));
+		assertEquals(2, ((Number) completedOrders2025.get(0).get("cnt")).intValue());
+
+		// Count pending order (status=1) for 2025
+		List<Map<String, Object>> pendingOrders2025 = jdbcTemplate.queryForList(
+				"SELECT COUNT(*) as cnt FROM orders WHERE status = 1 AND YEAR(order_date) = 2025");
+		log.info("  Pending 2025: {} orders", pendingOrders2025.get(0).get("cnt"));
+		assertEquals(1, ((Number) pendingOrders2025.get(0).get("cnt")).intValue());
+
+		// Count completed orders for 2024
+		List<Map<String, Object>> completedOrders2024 = jdbcTemplate.queryForList(
+				"SELECT COUNT(*) as cnt FROM orders WHERE status = 2 AND YEAR(order_date) = 2024");
+		log.info("  Completed 2024: {} orders", completedOrders2024.get(0).get("cnt"));
+		assertEquals(1, ((Number) completedOrders2024.get(0).get("cnt")).intValue());
+
+		// Verify OrderDetails - total quantity: 3+1+1+5+10+4 = 24
+		List<Map<String, Object>> orderDetails = jdbcTemplate.queryForList(
+				"SELECT SUM(quantity) as total_quantity FROM order_details");
+		log.info("OrderDetails total quantity: {}", orderDetails.get(0).get("total_quantity"));
+		assertEquals(24, ((Number) orderDetails.get(0).get("total_quantity")).intValue());
+
+		// Verify OrderDetails count = 6 details
+		List<Map<String, Object>> detailCount = jdbcTemplate.queryForList(
+				"SELECT COUNT(*) as cnt FROM order_details");
+		log.info("OrderDetails count: {} details", detailCount.get(0).get("cnt"));
+		assertEquals(6, ((Number) detailCount.get(0).get("cnt")).intValue());
+
+		log.info("=== VERIFICATION PASSED ===");
 	}
 
 	private Product createProduct(String name, double price, double costPrice, Category category) {
