@@ -83,7 +83,8 @@ class OrderReturnApiTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonMapper.writeValueAsString(req)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(0));
+                                .andExpect(jsonPath("$.status").value(0))
+                                .andExpect(jsonPath("$.reason").value("Hàng bị hư hỏng"));
 
                 // Xác nhận Order được cập nhật sang status=4
                 Mockito.verify(orderRepo).save(mockOrder);
@@ -136,7 +137,9 @@ class OrderReturnApiTest {
 
                 mockMvc.perform(get("/api/returns/order/{orderId}", orderId))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(0));
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.status").value(0))
+                                .andExpect(jsonPath("$.reason").value("Hư hỏng"));
 
                 Mockito.verify(returnRepo).findByOrder(mockOrder);
         }
@@ -172,12 +175,14 @@ class OrderReturnApiTest {
 
                 Mockito.when(returnRepo.findById(returnId)).thenReturn(Optional.of(mockReturn));
                 Mockito.when(orderRepo.save(mockOrder)).thenReturn(mockOrder);
+                mockReturn.setStatus(1);
                 Mockito.when(returnRepo.save(mockReturn)).thenReturn(mockReturn);
 
                 mockMvc.perform(put("/api/returns/admin/process/{id}", returnId)
                                 .param("action", "1")
                                 .param("note", "Chấp nhận trả hàng"))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value(1));
 
                 // Order phải chuyển sang status=6 (trả hàng/hoàn tiền)
                 Mockito.verify(orderRepo).save(mockOrder);
@@ -198,12 +203,14 @@ class OrderReturnApiTest {
 
                 Mockito.when(returnRepo.findById(returnId)).thenReturn(Optional.of(mockReturn));
                 Mockito.when(orderRepo.save(mockOrder)).thenReturn(mockOrder);
+                mockReturn.setStatus(1);
                 Mockito.when(returnRepo.save(mockReturn)).thenReturn(mockReturn);
 
                 mockMvc.perform(put("/api/returns/admin/process/{id}", returnId)
                                 .param("action", "1")
                                 .param("note", "Chấp nhận hủy"))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value(1));
 
                 // Order phải chuyển sang status=3 (hủy)
                 Mockito.verify(orderRepo).save(mockOrder);
@@ -224,12 +231,14 @@ class OrderReturnApiTest {
 
                 Mockito.when(returnRepo.findById(returnId)).thenReturn(Optional.of(mockReturn));
                 Mockito.when(orderRepo.save(mockOrder)).thenReturn(mockOrder);
+                mockReturn.setStatus(2);
                 Mockito.when(returnRepo.save(mockReturn)).thenReturn(mockReturn);
 
                 mockMvc.perform(put("/api/returns/admin/process/{id}", returnId)
                                 .param("action", "0")
                                 .param("note", "Từ chối vì không đủ bằng chứng"))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value(2));
 
                 // Từ chối → ret.status=2, order.status=2
                 Mockito.verify(orderRepo).save(mockOrder);

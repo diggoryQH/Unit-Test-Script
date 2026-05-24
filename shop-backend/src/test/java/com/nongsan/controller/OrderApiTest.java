@@ -83,7 +83,9 @@ class OrderApiTest {
                 mockMvc.perform(get("/api/orders"))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.size()").value(2))
-                                .andExpect(jsonPath("$[0].ordersId").value(2));
+                                .andExpect(jsonPath("$[0].ordersId").value(2))
+                                .andExpect(jsonPath("$[0].address").value("HCM"))
+                                .andExpect(jsonPath("$[1].ordersId").value(1));
 
                 Mockito.verify(orderRepository).findAllByOrderByOrdersIdDesc();
         }
@@ -102,7 +104,9 @@ class OrderApiTest {
 
                 mockMvc.perform(get("/api/orders/{id}", orderId))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.ordersId").value(1));
+                                .andExpect(jsonPath("$.ordersId").value(1))
+                                .andExpect(jsonPath("$.address").value("HN"))
+                                .andExpect(jsonPath("$.phone").value("0912"));
 
                 Mockito.verify(orderRepository).existsById(orderId);
                 Mockito.verify(orderRepository).findById(orderId);
@@ -141,7 +145,9 @@ class OrderApiTest {
 
                 mockMvc.perform(get("/api/orders/user/{email}", email))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.size()").value(1));
+                                .andExpect(jsonPath("$.size()").value(1))
+                                .andExpect(jsonPath("$[0].ordersId").value(1))
+                                .andExpect(jsonPath("$[0].address").value("HN"));
 
                 Mockito.verify(userRepository).existsByEmail(email);
                 Mockito.verify(orderRepository).findByUserOrderByOrdersIdDesc(mockUser);
@@ -242,7 +248,7 @@ class OrderApiTest {
                                 .andExpect(status().isOk());
 
                 // BUG: productRepository KHÔNG BAO GIỜ được gọi để update số lượng
-                Mockito.verify(productRepository, Mockito.never()).save(any(Product.class));
+                Mockito.verify(productRepository).save(any(Product.class));
         }
 
         /**

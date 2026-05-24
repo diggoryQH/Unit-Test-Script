@@ -115,6 +115,7 @@ class RateApiTest {
 
         mockMvc.perform(get("/api/rates/{orderDetailId}", orderDetailId))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.rating").value(4));
 
         Mockito.verify(orderDetailRepository).existsById(orderDetailId);
@@ -223,6 +224,8 @@ class RateApiTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.rating").value(5.0))
                 .andExpect(jsonPath("$.comment").value("Awesome!"));
 
         Mockito.verify(rateRepository).save(any(Rate.class));
@@ -324,6 +327,7 @@ class RateApiTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonMapper.writeValueAsString(rate)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5))
                 .andExpect(jsonPath("$.rating").value(4));
 
         Mockito.verify(rateRepository).save(any(Rate.class));
