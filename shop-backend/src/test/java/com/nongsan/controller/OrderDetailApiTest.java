@@ -73,7 +73,9 @@ class OrderDetailApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(2))
                 .andExpect(jsonPath("$[0].quantity").value(2))
-                .andExpect(jsonPath("$[1].quantity").value(1));
+                .andExpect(jsonPath("$[0].price").value(40000.0))
+                .andExpect(jsonPath("$[1].quantity").value(1))
+                .andExpect(jsonPath("$[1].price").value(30000.0));
 
         Mockito.verify(orderRepository).existsById(orderId);
         Mockito.verify(orderDetailRepository).findByOrder(mockOrder);
